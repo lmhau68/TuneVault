@@ -1,0 +1,53 @@
+# =========================
+# File build của .NET / C#
+# =========================
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.rsuser
+
+# =========================
+# File build chung
+# =========================
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+# =========================
+# Cấu hình IDE
+# =========================
+.idea/
+
+# =========================
+# File cấu hình local có thể chứa mật khẩu / connection string
+# =========================
+appsettings.Development.json
+appsettings.Local.json
+
+# =========================
+# React / Node
+# =========================
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# File media upload local
+# =========================
+uploads/
+media-files/
+
+# =========================
+# File hệ điều hành
+# =========================
+.DS_Store
+Thumbs.db
