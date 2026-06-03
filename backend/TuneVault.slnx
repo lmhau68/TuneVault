@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="TuneVault.API/TuneVault.API.csproj" />
+    <Project Path="TuneVault.Application/TuneVault.Application.csproj" />
+    <Project Path="TuneVault.Domain/TuneVault.Domain.csproj" />
+    <Project Path="TuneVault.Infrastructure/TuneVault.Infrastructure.csproj" />
+  </Folder>
+</Solution>
