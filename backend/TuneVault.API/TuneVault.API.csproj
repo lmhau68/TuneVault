@@ -8,6 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TuneVault.Application\TuneVault.Application.csproj" />
+    <ProjectReference Include="..\TuneVault.Infrastructure\TuneVault.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
