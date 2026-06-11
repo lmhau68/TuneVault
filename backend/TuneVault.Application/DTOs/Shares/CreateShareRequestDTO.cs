@@ -1,0 +1,1 @@
+public record CreateShareRequest(int ReceiverUserId, int MediaItemId, string? Message);

@@ -1,5 +1,7 @@
 using TuneVault.Application.Interfaces;
 using TuneVault.Infrastructure.Data;
+using TuneVault.Infrastructure.Repositories;
+using TuneVault.Application.Services;
 
 namespace TuneVault.API;
 
@@ -18,6 +20,8 @@ public class Program
         builder.Services.AddAuthorization();
 
         builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
+        builder.Services.AddScoped<IShareRepository, ShareRepository>();
+        builder.Services.AddScoped<ShareService>();
 
         var app = builder.Build();
 

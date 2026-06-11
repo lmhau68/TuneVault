@@ -1,0 +1,1 @@
+public record ShareResponse(int Id, int SenderUserId, int ReceiverUserId, int MediaItemId, string? Message, DateTime SharedAt);
