@@ -20,9 +20,12 @@ public class Program
         builder.Services.AddAuthorization();
 
         builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
+
         builder.Services.AddScoped<IShareRepository, ShareRepository>();
         builder.Services.AddScoped<ShareService>();
-
+        builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+        builder.Services.AddScoped<NotificationService>();
+        
         var app = builder.Build();
 
         app.UseSwagger();
