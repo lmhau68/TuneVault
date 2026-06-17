@@ -60,6 +60,8 @@ CREATE TABLE MediaItems (
     OwnerUserId INT NOT NULL,
 
     Title NVARCHAR(200) NOT NULL,
+    Artist NVARCHAR(150) NULL,     -- MỚI THÊM: Tên nghệ sĩ / tác giả
+    Genre NVARCHAR(100) NULL,      -- MỚI THÊM: Thể loại
     Description NVARCHAR(1000) NULL,
 
     MediaType NVARCHAR(20) NOT NULL, -- Audio hoặc Video
@@ -183,7 +185,9 @@ CREATE TABLE MediaShares (
 
     SenderUserId INT NOT NULL,
     ReceiverUserId INT NOT NULL,
-    MediaItemId INT NOT NULL,
+    
+    MediaItemId INT NULL,          -- ĐÃ SỬA: Cho phép NULL
+    PlaylistId INT NULL,           -- MỚI THÊM: Để share playlist
 
     Message NVARCHAR(500) NULL,
 
@@ -199,7 +203,15 @@ CREATE TABLE MediaShares (
 
     CONSTRAINT FK_MediaShares_MediaItems
         FOREIGN KEY (MediaItemId) REFERENCES MediaItems(Id)
-        ON DELETE NO ACTION
+        ON DELETE NO ACTION,
+        
+    CONSTRAINT FK_MediaShares_Playlists
+        FOREIGN KEY (PlaylistId) REFERENCES Playlists(Id)
+        ON DELETE NO ACTION,
+
+    -- Ràng buộc: Phải share 1 trong 2 (hoặc Media hoặc Playlist)
+    CONSTRAINT CK_MediaShares_ItemType
+        CHECK (MediaItemId IS NOT NULL OR PlaylistId IS NOT NULL)
 );
 
 -- =============================================
