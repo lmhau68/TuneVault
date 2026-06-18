@@ -2,6 +2,7 @@ public class SharedWithMeDto
 {
     public int ShareId { get; set; }
     public int MediaId { get; set; }
+    public int PlaylistId{ get; set; }
     public string? MediaUrl { get; set; } // Ví dụ có kèm thông tin Media
     public DateTime SharedAt { get; set; }
 

@@ -31,12 +31,13 @@ public class ShareService
             SenderUserId = senderId,
             ReceiverUserId = request.ReceiverUserId,
             MediaItemId = request.MediaItemId,
+            PlaylistId=request.PlaylistId,
             Message = request.Message,
             SharedAt = DateTime.UtcNow
         };
 
         int newId = await _shareRepo.CreateAsync(shareEntity);
 
-        return new ShareResponse(newId,senderId,request.ReceiverUserId,request.MediaItemId,request.Message,shareEntity.SharedAt);
+        return new ShareResponse(newId,senderId,request.ReceiverUserId,request.MediaItemId,request.PlaylistId,request.Message,shareEntity.SharedAt);
     }
 }
