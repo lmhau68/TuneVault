@@ -22,7 +22,8 @@ INSERT INTO MediaItems (
     OwnerUserId, 
     Title, 
     Artist, 
-    Genre, 
+    Genre,
+    Album, 
     Description, 
     MediaType, 
     FilePath, 
@@ -32,28 +33,28 @@ INSERT INTO MediaItems (
 )
 VALUES
 -- Thể loại 1: Pop (Audio)
-(1, N'Tháng Tư Là Lời Nói Dối Của Em', N'Hà Anh Tuấn', N'Pop', N'Bản tình ca da diết', 'Audio', 'uploads/audio/dummy.mp3', NULL, 315, 5000000),
-(2, N'Chắc Ai Đó Sẽ Về', N'Sơn Tùng M-TP', N'Pop', N'Nhạc pop buồn', 'Audio', 'uploads/audio/dummy.mp3', NULL, 260, 5000000),
-(3, N'Chạm Khẽ Tim Anh Một Chút Thôi', N'Noo Phước Thịnh', N'Pop', N'Ca khúc hit pop', 'Audio', 'uploads/audio/dummy.mp3', NULL, 305, 5000000),
+(1, N'Tháng Tư Là Lời Nói Dối Của Em', N'Hà Anh Tuấn', N'Pop', N'Fragile', N'Bản tình ca da diết', 'Audio', 'uploads/audio/dummy.mp3', NULL, 315, 5000000),
+(2, N'Chắc Ai Đó Sẽ Về', N'Sơn Tùng M-TP', N'Pop', N'Chàng Trai Năm Ấy (OST)', N'Nhạc pop buồn', 'Audio', 'uploads/audio/dummy.mp3', NULL, 260, 5000000),
+(3, N'Chạm Khẽ Tim Anh Một Chút Thôi', N'Noo Phước Thịnh', N'Pop', NULL, N'Ca khúc hit pop', 'Audio', 'uploads/audio/dummy.mp3', NULL, 305, 5000000),
 -- Thể loại 2: Chill (Audio)
-(1, N'Bước Qua Nhau', N'Vũ.', N'Chill', N'Nhạc buồn nhẹ nhàng', 'Audio', 'uploads/audio/dummy.mp3', NULL, 255, 5000000),
-(2, N'Đường Tôi Chở Em Về', N'buitruonglinh', N'Chill', N'Giai điệu vui tươi', 'Audio', 'uploads/audio/dummy.mp3', NULL, 230, 5000000),
-(3, N'Thanh Xuân', N'Da LAB', N'Chill', N'Kỷ niệm tuổi trẻ', 'Audio', 'uploads/audio/dummy.mp3', NULL, 218, 5000000),
+(1, N'Bước Qua Nhau', N'Vũ.', N'Chill', N'Một Vạn Năm', N'Nhạc buồn nhẹ nhàng', 'Audio', 'uploads/audio/dummy.mp3', NULL, 255, 5000000),
+(2, N'Đường Tôi Chở Em Về', N'buitruonglinh', N'Chill', NULL, N'Giai điệu vui tươi', 'Audio', 'uploads/audio/dummy.mp3', NULL, 230, 5000000),
+(3, N'Thanh Xuân', N'Da LAB', N'Chill', N'Kết Thúc Bắt Đầu', N'Kỷ niệm tuổi trẻ', 'Audio', 'uploads/audio/dummy.mp3', NULL, 218, 5000000),
 -- Thể loại 3: Trữ Tình (Audio)
-(1, N'Nơi Đau Muộn Màng', N'Tuấn Ngọc', N'Trữ Tình', N'Nhạc trữ tình sâu lắng', 'Audio', 'uploads/audio/dummy.mp3', NULL, 280, 5000000),
-(2, N'Niệm Khúc Cuối', N'Ngô Thụy Miên', N'Trữ Tình', N'Tình khúc bất hủ', 'Audio', 'uploads/audio/dummy.mp3', NULL, 310, 5000000),
-(3, N'Để Nhớ Một Thời Ta Đã Yêu', N'Lệ Quyên', N'Trữ Tình', N'Nhạc phòng trà', 'Audio', 'uploads/audio/dummy.mp3', NULL, 295, 5000000),
+(1, N'Nơi Đau Muộn Màng', N'Tuấn Ngọc', N'Trữ Tình', NULL, N'Nhạc trữ tình sâu lắng', 'Audio', 'uploads/audio/dummy.mp3', NULL, 280, 5000000),
+(2, N'Niệm Khúc Cuối', N'Ngô Thụy Miên', N'Trữ Tình', N'Riêng Một Góc Trời', N'Tình khúc bất hủ', 'Audio', 'uploads/audio/dummy.mp3', NULL, 310, 5000000),
+(3, N'Để Nhớ Một Thời Ta Đã Yêu', N'Lệ Quyên', N'Trữ Tình', N'Lệ Quyên Acoustic', N'Nhạc phòng trà', 'Audio', 'uploads/audio/dummy.mp3', NULL, 295, 5000000),
 -- Thể loại 4: Lofi (Audio)
-(1, N'Bao Tiền Một Mớ Bình Yên', N'14 Casper', N'Lofi', N'Bản lofi cực chill', 'Audio', 'uploads/audio/dummy.mp3', NULL, 210, 5000000),
-(2, N'Có Hẹn Với Thanh Xuân', N'Monstar', N'Lofi', N'Nhạc lofi thư giãn', 'Audio', 'uploads/audio/dummy.mp3', NULL, 190, 5000000),
-(3, N'Chìm Sâu', N'RPT MCK', N'Lofi', N'Lofi cuốn hút', 'Audio', 'uploads/audio/dummy.mp3', NULL, 175, 5000000),
+(1, N'Bao Tiền Một Mớ Bình Yên', N'14 Casper', N'Lofi', NULL, N'Bản lofi cực chill', 'Audio', 'uploads/audio/dummy.mp3', NULL, 210, 5000000),
+(2, N'Có Hẹn Với Thanh Xuân', N'Monstar', N'Lofi', N'Over The Moon', N'Nhạc lofi thư giãn', 'Audio', 'uploads/audio/dummy.mp3', NULL, 190, 5000000),
+(3, N'Chìm Sâu', N'RPT MCK', N'Lofi', N'99%', N'Lofi cuốn hút', 'Audio', 'uploads/audio/dummy.mp3', NULL, 175, 5000000),
 -- Thể loại 5: Rap (Audio)
-(1, N'Trốn Tìm', N'Đen Vâu', N'Rap', N'Rap mộc mạc, ý nghĩa', 'Audio', 'uploads/audio/dummy.mp3', NULL, 212, 5000000),
-(2, N'Ngủ Một Mình', N'HIEUTHUHAI', N'Rap', N'Rap trendy', 'Audio', 'uploads/audio/dummy.mp3', NULL, 185, 5000000),
-(3, N'Thu Cuối', N'Yanbi', N'Rap', N'Bản rap huyền thoại', 'Audio', 'uploads/audio/dummy.mp3', NULL, 245, 5000000),
+(1, N'Trốn Tìm', N'Đen Vâu', N'Rap', N'Trốn Tìm (Single)', N'Rap mộc mạc, ý nghĩa', 'Audio', 'uploads/audio/dummy.mp3', NULL, 212, 5000000),
+(2, N'Ngủ Một Mình', N'HIEUTHUHAI', N'Rap', N'Ai Cũng Phải Bắt Đầu Từ Đâu Đó', N'Rap trendy', 'Audio', 'uploads/audio/dummy.mp3', NULL, 185, 5000000),
+(3, N'Thu Cuối', N'Yanbi', N'Rap', NULL, N'Bản rap huyền thoại', 'Audio', 'uploads/audio/dummy.mp3', NULL, 245, 5000000),
 -- Mix thêm Video để thỏa điều kiện đề bài
-(1, N'MV Nơi Đau Muộn Màng', N'Tuấn Ngọc', N'Trữ Tình', N'Video ca nhạc', 'Video', 'uploads/video/dummy.mp4', NULL, 300, 50000000),
-(2, N'Live Concert Truyện Ngắn', N'Hà Anh Tuấn', N'Pop', N'Hòa nhạc trực tiếp', 'Video', 'uploads/video/dummy.mp4', NULL, 3600, 100000000);
+(1, N'MV Nơi Đau Muộn Màng', N'Tuấn Ngọc', N'Trữ Tình', NULL, N'Video ca nhạc', 'Video', 'uploads/video/dummy.mp4', NULL, 300, 50000000),
+(2, N'Live Concert Truyện Ngắn', N'Hà Anh Tuấn', N'Pop', N'Truyện Ngắn', N'Hòa nhạc trực tiếp', 'Video', 'uploads/video/dummy.mp4', NULL, 3600, 100000000);
 
 -- Playlists mẫu
 INSERT INTO Playlists (UserId, Name, Description, IsPublic)

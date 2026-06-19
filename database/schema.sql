@@ -62,6 +62,7 @@ CREATE TABLE MediaItems (
     Title NVARCHAR(200) NOT NULL,
     Artist NVARCHAR(150) NULL,     -- MỚI THÊM: Tên nghệ sĩ / tác giả
     Genre NVARCHAR(100) NULL,      -- MỚI THÊM: Thể loại
+    Album NVARCHAR(255) NULL,
     Description NVARCHAR(1000) NULL,
 
     MediaType NVARCHAR(20) NOT NULL, -- Audio hoặc Video

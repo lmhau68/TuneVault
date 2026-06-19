@@ -21,6 +21,9 @@ public class Program
 
         var app = builder.Build();
 
+        // Mở khóa thư mục wwwroot cho phép bên ngoài đọc file
+        app.UseStaticFiles();
+
         app.UseSwagger();
         app.UseSwaggerUI();
 
