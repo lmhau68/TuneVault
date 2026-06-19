@@ -2,6 +2,8 @@ using TuneVault.Application.Interfaces;
 using TuneVault.Infrastructure.Data;
 using TuneVault.Infrastructure.Repositories;
 using TuneVault.Application.Services;
+using TuneVault.Infrastructure.Hubs.Service;
+using TuneVault.Infrastructure.Hubs;
 
 namespace TuneVault.API;
 
@@ -20,8 +22,13 @@ public class Program
         builder.Services.AddAuthorization();
 
         builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
+
         builder.Services.AddScoped<IShareRepository, ShareRepository>();
         builder.Services.AddScoped<ShareService>();
+        builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+        builder.Services.AddScoped<NotificationService>();
+        builder.Services.AddSignalR();
+        builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
 
         var app = builder.Build();
 
@@ -33,6 +40,8 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
+
+        app.MapHub<NotificationHub>("/hubs/notifications");
 
         app.Run();
     }
