@@ -44,9 +44,16 @@ build/
 # =========================
 # File media upload local
 # =========================
-uploads/
 media-files/
-
+# 1. Chặn tất cả mọi thứ bên trong thư mục uploads
+**/wwwroot/uploads/**
+# 2. Bỏ chặn cấu trúc thư mục để Git có thể chui vào trong
+!**/wwwroot/uploads/
+!**/wwwroot/uploads/audio/
+!**/wwwroot/uploads/video/
+# 3. Bỏ chặn CỤ THỂ 2 file dummy này (để giữ lại làm data mẫu)
+!**/wwwroot/uploads/audio/dummy.mp3
+!**/wwwroot/uploads/video/dummy.mp4
 # =========================
 # File hệ điều hành
 # =========================
