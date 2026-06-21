@@ -1,4 +1,5 @@
 using TuneVault.Application.Interfaces;
+
 namespace TuneVault.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
