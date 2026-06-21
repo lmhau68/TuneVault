@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.Application.Services;
-
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 namespace TuneVault.API.Controllers;
 
+
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class NotificationsController : ControllerBase
@@ -18,9 +21,11 @@ public class NotificationsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetMyNotificationsAsync()
     {
-        // Tạm thời gán cứng ID người dùng đăng nhập bằng 1 để thực hiện kiểm thử luồng dữ liệu
-        int currentUserId = 2;
-
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
+        {
+            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
+        }
         var notifications = await _notificationService.GetMyNotificationsAsync(currentUserId);
         return Ok(notifications);
     }
@@ -28,8 +33,11 @@ public class NotificationsController : ControllerBase
     [HttpPut("{id}/read")]
     public async Task<IActionResult> MarkAsReadAsync(int id)
     {
-        int currentUserId = 2;// Tạm thời gán cứng ID người dùng đăng nhập bằng 1 để thực hiện kiểm thử luồng dữ liệu
-
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
+        {
+            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
+        }
         var success = await _notificationService.MarkAsReadAsync(id, currentUserId);
 
         if (!success)
