@@ -6,5 +6,5 @@ namespace TuneVault.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    // TODO: Viet endpoint cho Auth
+    // TODO: Viet endpoint cho Auth
 }

@@ -4,6 +4,6 @@ namespace TuneVault.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    // TODO: Viet SQL Dapper cho UserRepository
-    // Dùng IDbConnectionFactory de mo ket noi database
+  // TODO: Viet SQL Dapper cho IUserRepository
+    // DÃ¹ng IDbConnectionFactory de mo ket noi database
 }
