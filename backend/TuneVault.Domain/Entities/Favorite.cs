@@ -2,5 +2,11 @@ namespace TuneVault.Domain.Entities;
 
 public class Favorite
 {
-    // TODO: Map voi bang tuong ung trong database/schema.sql
+    public int Id { get; set; }
+
+    public int UserId { get; set; }
+
+    public int MediaItemId { get; set; }
+
+    public DateTime CreatedAt { get; set; }
 }
