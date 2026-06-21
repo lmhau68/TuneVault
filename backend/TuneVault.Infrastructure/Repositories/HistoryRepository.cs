@@ -1,9 +1,17 @@
 using TuneVault.Application.Interfaces;
+using TuneVault.Domain.Entities;
 
 namespace TuneVault.Infrastructure.Repositories;
 
 public class HistoryRepository : IHistoryRepository
 {
-    // TODO: Viet SQL Dapper cho HistoryRepository
-    // Dùng IDbConnectionFactory de mo ket noi database
+    public Task AddAsync(PlayHistory history)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IEnumerable<PlayHistory>> GetByUserAsync(int userId)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,6 +1,9 @@
+using TuneVault.Domain.Entities;
+
 namespace TuneVault.Application.Interfaces;
 
 public interface IHistoryRepository
 {
-    // TODO: Khai bao cac method cho HistoryRepository
+    Task AddAsync(PlayHistory history);
+    Task<IEnumerable<PlayHistory>> GetByUserAsync(int userId);
 }

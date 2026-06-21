@@ -16,6 +16,12 @@ public class Program
         builder.Services.AddScoped<IMediaRepository, MediaRepository>();
         builder.Services.AddScoped<MediaService>();
 
+        builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+        builder.Services.AddScoped<FavoriteService>();
+
+        builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
+        builder.Services.AddScoped<HistoryService>();
+
         builder.Services.AddControllers();
 
         builder.Services.AddEndpointsApiExplorer();

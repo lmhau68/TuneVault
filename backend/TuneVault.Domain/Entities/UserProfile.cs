@@ -2,5 +2,17 @@ namespace TuneVault.Domain.Entities;
 
 public class UserProfile
 {
-    // TODO: Map voi bang tuong ung trong database/schema.sql
+    public int Id { get; set; }
+
+    public int UserId { get; set; }
+
+    public string? FullName { get; set; }
+
+    public string? Bio { get; set; }
+
+    public string? AvatarUrl { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
 }
