@@ -1,4 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using System.Threading.Tasks;
+using TuneVault.Application.DTOs.Media;
+using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
 
@@ -7,4 +11,59 @@ namespace TuneVault.API.Controllers;
 public class MediaController : ControllerBase
 {
     // TODO: Viet endpoint cho Media
+    private readonly MediaService _mediaService;
+
+        public MediaController(MediaService mediaService)
+        {
+            _mediaService = mediaService;
+        }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> Upload([FromForm] UploadMediaRequest request)
+        {
+            // Tạm thời hardcode userId = 1 để test, sau này Bạn A làm xong Auth sẽ lấy từ JWT Token
+            int currentUserId = 1; 
+            
+            var result = await _mediaService.UploadMediaAsync(request, currentUserId);
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var result = await _mediaService.GetAllMediaAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var result = await _mediaService.GetByIdAsync(id);
+            if (result == null) return NotFound("Media not found");
+            return Ok(result);
+        }
+
+        [HttpGet("search")]
+        public async Task<IActionResult> Search([FromQuery] string keyword)
+        {
+            var result = await _mediaService.SearchAsync(keyword);
+            return Ok(result);
+        }
+
+        // API quan trọng để stream nhạc/video
+        [HttpGet("{id}/stream")]
+        public async Task<IActionResult> Stream(int id)
+        {
+            var media = await _mediaService.GetByIdAsync(id);
+            if (media == null) return NotFound("Media not found");
+
+            // Xử lý đường dẫn file
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", media.FileUrl.TrimStart('/'));
+            if (!System.IO.File.Exists(filePath)) return NotFound("File does not exist on server");
+
+            var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            
+            // enableRangeProcessing = true rất quan trọng để trình duyệt có thể tua (seek) nhạc/video
+            return File(stream, "application/octet-stream", enableRangeProcessing: true);
+        }
 }
