@@ -33,6 +33,7 @@ public class ShareRepository : IShareRepository
             SELECT 
                 s.Id AS ShareId, 
                 s.MediaItemId AS MediaId, 
+                s.PlaylistId AS PlaylistId,
                 m.FilePath AS MediaUrl, 
                 s.SharedAt AS SharedAt,
                 s.SenderUserId AS SenderId,
@@ -56,6 +57,7 @@ public class ShareRepository : IShareRepository
             SELECT 
                 s.Id AS ShareId, 
                 s.MediaItemId AS MediaId, 
+                s.PlaylistId AS PlaylistId,
                 m.FilePath AS MediaUrl, 
                 s.SharedAt AS SharedAt,
                 s.ReceiverUserId AS ReceiverId,

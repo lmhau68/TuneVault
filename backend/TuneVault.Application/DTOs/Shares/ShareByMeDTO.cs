@@ -2,6 +2,7 @@ public class SharedByMeDto
 {
     public int ShareId { get; set; }
     public int MediaId { get; set; }
+    public int PlaylistId{ get; set; }
     public string? MediaUrl { get; set; }
     public DateTime SharedAt { get; set; }
 
