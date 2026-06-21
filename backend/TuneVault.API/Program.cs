@@ -10,6 +10,10 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
+
+        builder.Services.AddScoped<IMediaRepository, MediaRepository>();
+        builder.Services.AddScoped<MediaService>();
+
         builder.Services.AddControllers();
 
         builder.Services.AddEndpointsApiExplorer();
@@ -20,9 +24,6 @@ public class Program
         builder.Services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
 
         var app = builder.Build();
-
-        // Mở khóa thư mục wwwroot cho phép bên ngoài đọc file
-        app.UseStaticFiles();
 
         app.UseSwagger();
         app.UseSwaggerUI();
