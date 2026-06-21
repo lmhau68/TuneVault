@@ -1,6 +1,14 @@
+using TuneVault.Domain.Entities;
+
 namespace TuneVault.Application.Interfaces;
 
 public interface IPlaylistRepository
 {
-    // TODO: Khai bao cac method cho PlaylistRepository
+    Task<int> CreateAsync(Playlist playlist);
+
+    Task<Playlist?> GetByIdAsync(int id);
+
+    Task AddTrackAsync(PlaylistTrack track);
+
+    Task RemoveTrackAsync(int playlistId, int mediaItemId);
 }
