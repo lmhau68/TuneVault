@@ -1,10 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
-using TuneVault.Application.Interfaces;
-using TuneVault.Application.Services;
-using TuneVault.Domain.Entities;
-
 namespace TuneVault.API.Controllers;
 
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using TuneVault.Application.Services;
+using System.Security.Claims;
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class SharesController : ControllerBase
@@ -13,16 +14,17 @@ public class SharesController : ControllerBase
     private readonly ShareService _shareService;
     public SharesController(ShareService shareService)
     {
-        _shareService= shareService;
+        _shareService = shareService;
     }
-
 
     [HttpGet("with-me")]
     public async Task<IActionResult> GetSharedWithMeAsync()
     {
-        
-        int currentUserId = 2;//tam sau nay xoa lay nguoi dung hien tai thong qua service
-
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
+        {
+            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
+        }
         var result = await _shareService.GetSharedWithMeAsync(currentUserId);
         return Ok(result);
     }
@@ -30,9 +32,11 @@ public class SharesController : ControllerBase
     [HttpGet("by-me")]
     public async Task<IActionResult> GetSharedByMeAsync()
     {
-        
-        int currentUserId = 1;//tam sau nay xoa lay nguoi dung hien tai thong qua service
-
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
+        {
+            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
+        }
         var result = await _shareService.GetSharedByMeAsync(currentUserId);
         return Ok(result);
     }
@@ -40,7 +44,18 @@ public class SharesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateShareRequest request)
     {
-        int currentUserId = 1;//tam sau nay xoa lay nguoi dung hien tai thong qua service
+        // kiem tra hop le du lieu dau vao
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
+        {
+            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
+        }
+        
         var response = await _shareService.ShareMediaAsync(currentUserId, request);
         return Ok(response);
     }
