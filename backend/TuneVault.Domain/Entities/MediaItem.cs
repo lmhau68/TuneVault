@@ -1,5 +1,3 @@
-using System;
-
 namespace TuneVault.Domain.Entities;
 
 public class MediaItem
@@ -20,3 +18,4 @@ public class MediaItem
 
     public string? Album { get; set; }
 }
+
