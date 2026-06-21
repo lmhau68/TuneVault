@@ -1,5 +1,7 @@
 using TuneVault.Application.Interfaces;
+using TuneVault.Application.Services;
 using TuneVault.Infrastructure.Data;
+using TuneVault.Infrastructure.Repositories;
 
 namespace TuneVault.API;
 
@@ -13,6 +15,12 @@ public class Program
 
         builder.Services.AddScoped<IMediaRepository, MediaRepository>();
         builder.Services.AddScoped<MediaService>();
+
+        builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
+        builder.Services.AddScoped<FavoriteService>();
+
+        builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
+        builder.Services.AddScoped<HistoryService>();
 
         builder.Services.AddControllers();
 

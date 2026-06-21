@@ -24,4 +24,5 @@ public class User
     // Navigation property: Mối quan hệ 1-1 với bảng UserProfiles
     // Dùng để Dapper map dữ liệu khi dùng lệnh LEFT JOIN
     public UserProfile? Profile { get; set; }
+
 }

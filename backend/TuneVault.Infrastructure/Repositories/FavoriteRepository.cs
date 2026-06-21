@@ -1,9 +1,22 @@
 using TuneVault.Application.Interfaces;
+using TuneVault.Domain.Entities;
 
 namespace TuneVault.Infrastructure.Repositories;
 
 public class FavoriteRepository : IFavoriteRepository
 {
-    // TODO: Viet SQL Dapper cho FavoriteRepository
-    // Dùng IDbConnectionFactory de mo ket noi database
+    public Task AddAsync(Favorite favorite)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task RemoveAsync(int userId, int mediaItemId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IEnumerable<Favorite>> GetByUserAsync(int userId)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -1,6 +1,6 @@
-namespace TuneVault.Domain.Entities;
+﻿namespace TuneVault.Application.DTOs.Playlists;
 
-public class Playlist
+public class PlaylistResponse
 {
     public int Id { get; set; }
 
@@ -10,11 +10,7 @@ public class Playlist
 
     public string? Description { get; set; }
 
-    public string? CoverImagePath { get; set; }
-
     public bool IsPublic { get; set; }
 
     public DateTime CreatedAt { get; set; }
-
-    public DateTime? UpdatedAt { get; set; }
 }
