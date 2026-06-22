@@ -1,27 +1,36 @@
+using System;
+
 namespace TuneVault.Domain.Entities;
 
 public class User
 {
-    // Cột: Id INT IDENTITY(1,1) PRIMARY KEY
+    /// <summary>
+    /// Khóa chính tự tăng (Id INT IDENTITY(1,1))
+    /// </summary>
     public int Id { get; set; }
-    
-    // Cột: Email NVARCHAR(255) NOT NULL UNIQUE
+
+    /// <summary>
+    /// Địa chỉ email tài khoản (Email NVARCHAR(255) NOT NULL UNIQUE)
+    /// </summary>
     public string Email { get; set; } = string.Empty;
-    
-    // Cột: PasswordHash NVARCHAR(500) NOT NULL
+
+    /// <summary>
+    /// Chuỗi mật khẩu đã được mã hóa bảo mật (PasswordHash NVARCHAR(500) NOT NULL)
+    /// </summary>
     public string PasswordHash { get; set; } = string.Empty;
-    
-    // Cột: DisplayName NVARCHAR(100) NOT NULL
+
+    /// <summary>
+    /// Tên hiển thị công khai trên ứng dụng (DisplayName NVARCHAR(100) NOT NULL)
+    /// </summary>
     public string DisplayName { get; set; } = string.Empty;
-    
-    // Cột: CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
-    public DateTime CreatedAt { get; set; }
-    
-    // Cột: UpdatedAt DATETIME2 NULL
-    // Dấu '?' cực kỳ quan trọng vì SQL cho phép NULL
+
+    /// <summary>
+    /// Thời gian khởi tạo tài khoản (CreatedAt DATETIME2 NOT NULL)
+    /// </summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// Thời gian cập nhật thông tin gần nhất, cho phép NULL (UpdatedAt DATETIME2 NULL)
+    /// </summary>
     public DateTime? UpdatedAt { get; set; }
-    
-    // Navigation property: Mối quan hệ 1-1 với bảng UserProfiles
-    // Dùng để Dapper map dữ liệu khi dùng lệnh LEFT JOIN
-    public UserProfile? Profile { get; set; }
 }
