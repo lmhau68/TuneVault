@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Data;
+using System.Threading.Tasks;
 using Dapper;
 using TuneVault.Application.Interfaces;
 using TuneVault.Domain.Entities;
@@ -9,88 +11,76 @@ public class UserRepository : IUserRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
 
-    // Tiêm IDbConnectionFactory thông qua Dependency Injection
+    // Tiêm IDbConnectionFactory qua Constructor để khởi tạo kết nối Database linh hoạt
     public UserRepository(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<User?> GetUserByUsernameAsync(string username)
+    public async Task<User?> GetByIdAsync(int id)
     {
-        const string sql = @"
-            SELECT Id, Username, PasswordHash, Email, CreatedAt 
-            FROM Users 
-            WHERE Username = @Username";
-
-        // Dùng 'using' để đảm bảo connection tự động đóng (Dispose) sau khi thực thi xong
         using var connection = _connectionFactory.CreateConnection();
+        const string sql = "SELECT * FROM Users WHERE Id = @Id;";
         
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Username = username });
+        // Sử dụng QueryFirstOrDefaultAsync của Dapper để lấy bản ghi đầu tiên hoặc null
+        return await connection.QueryFirstOrDefaultAsync<User>(sql, new { Id = id });
     }
 
-    public async Task<User?> GetUserByIdAsync(int id)
+    public async Task<User?> GetByEmailAsync(string email)
     {
-        // Sử dụng LEFT JOIN để lấy User kèm theo UserProfile (nếu có)
-        const string sql = @"
-            SELECT 
-                u.Id, u.Username, u.PasswordHash, u.Email, u.CreatedAt,
-                p.Id, p.UserId, p.DisplayName, p.AvatarUrl, p.Bio, p.UpdatedAt
-            FROM Users u
-            LEFT JOIN UserProfiles p ON u.Id = p.UserId
-            WHERE u.Id = @Id";
-
         using var connection = _connectionFactory.CreateConnection();
-
-        // Kỹ thuật Multi-Mapping của Dapper: Map 2 bảng vào 1 object User
-        var result = await connection.QueryAsync<User, UserProfile, User>(
-            sql,
-            (user, profile) =>
-            {
-                user.Profile = profile; // Gắn profile vào thuộc tính navigation của User
-                return user;
-            },
-            new { Id = id },
-            splitOn: "Id" // Dapper sẽ tự tách dữ liệu Profile bắt đầu từ cột 'Id' thứ 2
-        );
-
-        return result.FirstOrDefault();
+        const string sql = "SELECT * FROM Users WHERE Email = @Email;";
+        
+        return await connection.QueryFirstOrDefaultAsync<User>(sql, new { Email = email });
     }
 
-    public async Task<bool> CreateUserAsync(User user)
+    public async Task<int> CreateAsync(User user)
     {
-        const string sql = @"
-            INSERT INTO Users (Username, PasswordHash, Email, CreatedAt) 
-            VALUES (@Username, @PasswordHash, @Email, @CreatedAt)";
-
         using var connection = _connectionFactory.CreateConnection();
         
-        // ExecuteAsync trả về số dòng bị ảnh hưởng
+        // Sử dụng SCOPE_IDENTITY() để lấy Id tự tăng (IDENTITY) ngay sau khi Insert thành công
+        const string sql = @"
+            INSERT INTO Users (Email, PasswordHash, DisplayName, CreatedAt, UpdatedAt)
+            VALUES (@Email, @PasswordHash, @DisplayName, @CreatedAt, @UpdatedAt);
+            SELECT CAST(SCOPE_IDENTITY() as int);";
+
+        var id = await connection.ExecuteScalarAsync<int>(sql, user);
+        return id;
+    }
+
+    public async Task<bool> UpdateAsync(User user)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        const string sql = @"
+            UPDATE Users 
+            SET Email = @Email, 
+                PasswordHash = @PasswordHash, 
+                DisplayName = @DisplayName, 
+                UpdatedAt = @UpdatedAt 
+            WHERE Id = @Id;";
+
+        // ExecuteAsync trả về số hàng (rows) bị ảnh hưởng bởi câu lệnh SQL
         var rowsAffected = await connection.ExecuteAsync(sql, user);
         return rowsAffected > 0;
     }
 
-    public async Task<bool> UpdateUserProfileAsync(UserProfile profile)
+    public async Task<IEnumerable<User>> SearchByDisplayNameAsync(string query)
     {
-        // Logic UPSERT: Cập nhật nếu đã tồn tại, Tạo mới nếu chưa có
-        const string sql = @"
-            IF EXISTS (SELECT 1 FROM UserProfiles WHERE UserId = @UserId)
-            BEGIN
-                UPDATE UserProfiles 
-                SET DisplayName = @DisplayName, 
-                    AvatarUrl = @AvatarUrl, 
-                    Bio = @Bio, 
-                    UpdatedAt = @UpdatedAt
-                WHERE UserId = @UserId
-            END
-            ELSE
-            BEGIN
-                INSERT INTO UserProfiles (UserId, DisplayName, AvatarUrl, Bio, UpdatedAt)
-                VALUES (@UserId, @DisplayName, @AvatarUrl, @Bio, @UpdatedAt)
-            END";
-
         using var connection = _connectionFactory.CreateConnection();
-        
-        var rowsAffected = await connection.ExecuteAsync(sql, profile);
+        const string sql = "SELECT * FROM Users WHERE DisplayName LIKE @SearchQuery;";
+
+        // Thêm ký tự wildcard '%' để thực hiện tìm kiếm dạng Full-text/Phần tử chứa cụm từ
+        var users = await connection.QueryAsync<User>(sql, new { SearchQuery = $"%{query}%" });
+        return users;
+    }
+
+    public async Task<bool> DeleteAsync(int id)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        const string sql = "DELETE FROM Users WHERE Id = @Id;";
+
+        // Nhờ ràng buộc ON DELETE CASCADE trong Schema, khi xóa User, bản ghi UserProfiles tương ứng sẽ tự động bị xóa sạch.
+        var rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
         return rowsAffected > 0;
     }
 }
