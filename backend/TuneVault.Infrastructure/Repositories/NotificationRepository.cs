@@ -18,7 +18,7 @@ public class NotificationRepository : INotificationRepository
     {
         // Viết câu lệnh SQL thuần map chính xác với tên cột đã sửa đổi
         string sql = @"
-            SELECT Id, UserId, Title, Message, NotificationType, RelatedEntityId, IsRead, CreatedAt 
+            SELECT Id, UserId, Title, Message, NotificationType, RelatedEntityId AS RelatedId, IsRead, CreatedAt 
             FROM Notifications 
             WHERE UserId = @UserId 
             ORDER BY CreatedAt DESC;";
