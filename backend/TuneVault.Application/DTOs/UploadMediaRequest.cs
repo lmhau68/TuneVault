@@ -11,5 +11,7 @@ namespace TuneVault.Application.DTOs.Media
         public string? Genre { get; set; }
 
         public IFormFile File { get; set; } = default!;
+
+        public string? Album { get; set; }
     }
 }

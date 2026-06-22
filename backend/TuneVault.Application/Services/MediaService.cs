@@ -28,13 +28,27 @@ public class MediaService
             var fileName = $"{Guid.NewGuid()}_{request.File.FileName}";
             var filePath = Path.Combine(uploadPath, fileName);
 
+
+            // 2. Logic lưu metadata vào DB
+            var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+            var allowedExtensions = new[]
+            {
+                ".mp3",
+                ".wav",
+                ".mp4",
+                ".avi",
+                ".mov"
+            };
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                throw new ArgumentException("Only mp3, wav, mp4, avi, mov files are allowed.");
+            }
+
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await request.File.CopyToAsync(stream);
             }
-
-            // 2. Logic lưu metadata vào DB
-            var extension = Path.GetExtension(request.File.FileName).ToLower();
 
             string mediaType =
                 extension == ".mp4" ||
@@ -42,6 +56,7 @@ public class MediaService
                 extension == ".mov"
                     ? "Video"
                     : "Audio";
+
             var media = new MediaItem
             {
                 Title = request.Title,
@@ -50,6 +65,7 @@ public class MediaService
 
                 Artist = request.Artist,
                 Genre = request.Genre,
+                Album = request.Album,
 
                 MediaType = mediaType,
 
