@@ -34,13 +34,28 @@ public class MediaService
             }
 
             // 2. Logic lưu metadata vào DB
+            var extension = Path.GetExtension(request.File.FileName).ToLower();
+
+            string mediaType =
+                extension == ".mp4" ||
+                extension == ".avi" ||
+                extension == ".mov"
+                    ? "Video"
+                    : "Audio";
             var media = new MediaItem
             {
                 Title = request.Title,
-                FileUrl = $"/uploads/{fileName}",
-                UploadedBy = userId,
+
+                OwnerUserId = userId,
+
                 Artist = request.Artist,
-                Genre = request.Genre
+                Genre = request.Genre,
+
+                MediaType = mediaType,
+
+                FilePath = $"/uploads/{fileName}",
+
+                FileSizeInBytes = request.File.Length
             };
 
             var newId = await _mediaRepository.CreateAsync(media);
@@ -51,8 +66,8 @@ public class MediaService
             {
                 Id = media.Id,
                 Title = media.Title,
-                FileUrl = media.FileUrl,
-                UploadedBy = media.UploadedBy,
+                FilePath = media.FilePath,
+                OwnerUserId = media.OwnerUserId,
                 CreatedAt = DateTime.Now,
                 Artist = media.Artist,
                 Genre = media.Genre
@@ -85,8 +100,8 @@ public class MediaService
             {
                 Id = media.Id,
                 Title = media.Title,
-                FileUrl = media.FileUrl,
-                UploadedBy = media.UploadedBy,
+                FilePath = media.FilePath,
+                OwnerUserId = media.OwnerUserId,
                 CreatedAt = media.CreatedAt,
                 Artist = media.Artist,
                 Genre = media.Genre

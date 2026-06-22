@@ -1,5 +1,7 @@
 using TuneVault.Application.Interfaces;
+using TuneVault.Application.Services;
 using TuneVault.Infrastructure.Data;
+using TuneVault.Infrastructure.Repositories;
 
 namespace TuneVault.API;
 

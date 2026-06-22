@@ -21,11 +21,42 @@ public class MediaRepository : IMediaRepository
         public async Task<int> CreateAsync(MediaItem media)
         {
             var query = @"
-                INSERT INTO MediaItems (Title, FileUrl, UploadedBy, CreatedAt, Artist, Genre) 
-                VALUES (@Title, @FileUrl, @UploadedBy, GETDATE(), @Artist, @Genre);
-                SELECT CAST(SCOPE_IDENTITY() as int);";
+                INSERT INTO MediaItems
+                (
+                    OwnerUserId,
+                    Title,
+                    Artist,
+                    Genre,
+                    Album,
+                    Description,
+                    MediaType,
+                    FilePath,
+                    ThumbnailPath,
+                    DurationInSeconds,
+                    FileSizeInBytes,
+                    CreatedAt
+                )
+                VALUES
+                (
+                    @OwnerUserId,
+                    @Title,
+                    @Artist,
+                    @Genre,
+                    @Album,
+                    @Description,
+                    @MediaType,
+                    @FilePath,
+                    @ThumbnailPath,
+                    @DurationInSeconds,
+                    @FileSizeInBytes,
+                    GETDATE()
+                );
+
+                SELECT CAST(SCOPE_IDENTITY() as int);
+            ";
 
             using var connection = _connectionFactory.CreateConnection();
+
             return await connection.QuerySingleAsync<int>(query, media);
         }
 

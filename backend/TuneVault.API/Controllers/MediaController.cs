@@ -58,7 +58,7 @@ public class MediaController : ControllerBase
             if (media == null) return NotFound("Media not found");
 
             // Xử lý đường dẫn file
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", media.FileUrl.TrimStart('/'));
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", media.FilePath.TrimStart('/'));
             if (!System.IO.File.Exists(filePath)) return NotFound("File does not exist on server");
 
             var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
