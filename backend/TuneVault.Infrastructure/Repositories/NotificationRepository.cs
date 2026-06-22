@@ -18,7 +18,7 @@ public class NotificationRepository : INotificationRepository
     {
         // Viết câu lệnh SQL thuần map chính xác với tên cột đã sửa đổi
         string sql = @"
-            SELECT Id, UserId, Title, Message, NotificationType, RelatedEntityId, IsRead, CreatedAt 
+            SELECT Id, UserId, Title, Message, NotificationType, RelatedEntityId AS RelatedId, IsRead, CreatedAt 
             FROM Notifications 
             WHERE UserId = @UserId 
             ORDER BY CreatedAt DESC;";
@@ -47,7 +47,7 @@ public class NotificationRepository : INotificationRepository
     public async Task<bool> CreateNotificationAsync(int userId, string title, string message, string type, int relatedId)
     {
         string sql = @"
-            INSERT INTO Notifications (UserId, Title, Message, NotificationType, RelatedEntityId AS RelatedId, IsRead, CreatedAt)
+            INSERT INTO Notifications (UserId, Title, Message, NotificationType, RelatedEntityId, IsRead, CreatedAt)
             VALUES (@UserId, @Title, @Message, @NotificationType, @RelatedId, 0, GETDATE());";
 
         using (var conn = _connFactory.CreateConnection())
