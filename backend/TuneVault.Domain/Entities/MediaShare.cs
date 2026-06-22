@@ -7,6 +7,7 @@ public class MediaShare
     public int SenderUserId { get; set; }
     public int ReceiverUserId { get; set; } 
     public int MediaItemId { get; set; }
+    public int PlaylistId{ get; set; }
     public string? Message { get; set; }
 
     public DateTime SharedAt { get; set; }

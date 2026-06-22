@@ -1,4 +1,5 @@
 using Dapper;
+using TuneVault.Application.DTOs.Shares;
 using TuneVault.Application.Interfaces;
 using TuneVault.Domain.Entities;
 
@@ -16,9 +17,9 @@ public class ShareRepository : IShareRepository
     public async Task<int> CreateAsync(MediaShare media)
     {
         string sql = @"
-                INSERT INTO MediaShares (SenderUserId, ReceiverUserId, MediaItemId, Message, SharedAt)
+                INSERT INTO MediaShares (SenderUserId, ReceiverUserId, MediaItemId,PlaylistId, Message, SharedAt)
                 OUTPUT INSERTED.Id
-                VALUES (@SenderUserId, @ReceiverUserId, @MediaItemId, @Message, @SharedAt);";
+                VALUES (@SenderUserId, @ReceiverUserId, @MediaItemId,@PlaylistId, @Message, @SharedAt);";
 
         using (var conn = _connFactory.CreateConnection())
         {
@@ -33,14 +34,15 @@ public class ShareRepository : IShareRepository
             SELECT 
                 s.Id AS ShareId, 
                 s.MediaItemId AS MediaId, 
+                s.PlaylistId AS PlaylistId,
                 m.FilePath AS MediaUrl, 
                 s.SharedAt AS SharedAt,
                 s.SenderUserId AS SenderId,
                 s.Message AS Message,
                 u.DisplayName AS SenderName
             FROM MediaShares s
-            INNER JOIN Users u ON s.SenderUserId = u.Id
-            INNER JOIN MediaItems m ON s.MediaItemId = m.Id
+            LEFT JOIN Users u ON s.SenderUserId = u.Id
+            LEFT JOIN MediaItems m ON s.MediaItemId = m.Id
             WHERE s.ReceiverUserId = @ReceiverId
             ORDER BY s.SharedAt DESC;";
         using (var conn = _connFactory.CreateConnection())
@@ -56,14 +58,15 @@ public class ShareRepository : IShareRepository
             SELECT 
                 s.Id AS ShareId, 
                 s.MediaItemId AS MediaId, 
+                s.PlaylistId AS PlaylistId,
                 m.FilePath AS MediaUrl, 
                 s.SharedAt AS SharedAt,
                 s.ReceiverUserId AS ReceiverId,
                 s.Message AS Message, 
                 u.DisplayName AS ReceiverName
             FROM MediaShares s
-            INNER JOIN Users u ON s.ReceiverUserId = u.Id
-            INNER JOIN MediaItems m ON s.MediaItemId = m.Id
+            LEFT JOIN Users u ON s.ReceiverUserId = u.Id
+            LEFT JOIN MediaItems m ON s.MediaItemId = m.Id
             WHERE s.SenderUserId = @SenderId
             ORDER BY s.SharedAt DESC;";
         using (var conn = _connFactory.CreateConnection())
