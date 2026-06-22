@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using TuneVault.Application.DTOs.Shares;
 using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Interfaces;

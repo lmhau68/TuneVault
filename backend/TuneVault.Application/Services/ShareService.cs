@@ -1,3 +1,4 @@
+using TuneVault.Application.DTOs.Shares;
 using TuneVault.Application.Interfaces;
 using TuneVault.Domain.Entities;
 namespace TuneVault.Application.Services;
