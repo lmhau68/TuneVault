@@ -1,96 +1,40 @@
-using System.Data;
-using Dapper;
-using TuneVault.Application.Interfaces;
-using TuneVault.Domain.Entities;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using TuneVault.Domain.Entities; // Giả định đây là nơi bạn định nghĩa thực thể User từ Database Schema
 
-namespace TuneVault.Infrastructure.Repositories;
+namespace TuneVault.Application.Interfaces;
 
-public class UserRepository : IUserRepository
+public interface IUserRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    /// <summary>
+    /// Tìm kiếm người dùng bằng ID (Phục vụ hiển thị thông tin chi tiết và kiểm tra quyền)
+    /// </summary>
+    Task<User?> GetByIdAsync(int id);
 
-    // Tiêm IDbConnectionFactory thông qua Dependency Injection
-    public UserRepository(IDbConnectionFactory connectionFactory)
-    {
-        _connectionFactory = connectionFactory;
-    }
+    /// <summary>
+    /// Tìm kiếm người dùng qua Email (Phục vụ luồng Đăng nhập và kiểm tra trùng lặp khi Đăng ký)
+    /// </summary>
+    Task<User?> GetByEmailAsync(string email);
 
-    public async Task<User?> GetUserByUsernameAsync(string username)
-    {
-        const string sql = @"
-            SELECT Id, Username, PasswordHash, Email, CreatedAt 
-            FROM Users 
-            WHERE Username = @Username";
+    /// <summary>
+    /// Thêm mới một tài khoản vào hệ thống (Phục vụ luồng Đăng ký)
+    /// </summary>
+    /// <returns>Trả về Id tự tăng (IDENTITY) vừa được sinh ra trong Database</returns>
+    Task<int> CreateAsync(User user);
 
-        // Dùng 'using' để đảm bảo connection tự động đóng (Dispose) sau khi thực thi xong
-        using var connection = _connectionFactory.CreateConnection();
-        
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Username = username });
-    }
+    /// <summary>
+    /// Cập nhật thông tin cơ bản của tài khoản (Email, DisplayName,...)
+    /// </summary>
+    /// <returns>Trả về true nếu cập nhật thành công</returns>
+    Task<bool> UpdateAsync(User user);
 
-    public async Task<User?> GetUserByIdAsync(int id)
-    {
-        // Sử dụng LEFT JOIN để lấy User kèm theo UserProfile (nếu có)
-        const string sql = @"
-            SELECT 
-                u.Id, u.Username, u.PasswordHash, u.Email, u.CreatedAt,
-                p.Id, p.UserId, p.DisplayName, p.AvatarUrl, p.Bio, p.UpdatedAt
-            FROM Users u
-            LEFT JOIN UserProfiles p ON u.Id = p.UserId
-            WHERE u.Id = @Id";
+    /// <summary>
+    /// Tìm kiếm danh sách người dùng theo tên hiển thị (Phục vụ tính năng tìm kiếm User/Artist trên TuneVault)
+    /// </summary>
+    Task<IEnumerable<User>> SearchByDisplayNameAsync(string query);
 
-        using var connection = _connectionFactory.CreateConnection();
-
-        // Kỹ thuật Multi-Mapping của Dapper: Map 2 bảng vào 1 object User
-        var result = await connection.QueryAsync<User, UserProfile, User>(
-            sql,
-            (user, profile) =>
-            {
-                user.Profile = profile; // Gắn profile vào thuộc tính navigation của User
-                return user;
-            },
-            new { Id = id },
-            splitOn: "Id" // Dapper sẽ tự tách dữ liệu Profile bắt đầu từ cột 'Id' thứ 2
-        );
-
-        return result.FirstOrDefault();
-    }
-
-    public async Task<bool> CreateUserAsync(User user)
-    {
-        const string sql = @"
-            INSERT INTO Users (Username, PasswordHash, Email, CreatedAt) 
-            VALUES (@Username, @PasswordHash, @Email, @CreatedAt)";
-
-        using var connection = _connectionFactory.CreateConnection();
-        
-        // ExecuteAsync trả về số dòng bị ảnh hưởng
-        var rowsAffected = await connection.ExecuteAsync(sql, user);
-        return rowsAffected > 0;
-    }
-
-    public async Task<bool> UpdateUserProfileAsync(UserProfile profile)
-    {
-        // Logic UPSERT: Cập nhật nếu đã tồn tại, Tạo mới nếu chưa có
-        const string sql = @"
-            IF EXISTS (SELECT 1 FROM UserProfiles WHERE UserId = @UserId)
-            BEGIN
-                UPDATE UserProfiles 
-                SET DisplayName = @DisplayName, 
-                    AvatarUrl = @AvatarUrl, 
-                    Bio = @Bio, 
-                    UpdatedAt = @UpdatedAt
-                WHERE UserId = @UserId
-            END
-            ELSE
-            BEGIN
-                INSERT INTO UserProfiles (UserId, DisplayName, AvatarUrl, Bio, UpdatedAt)
-                VALUES (@UserId, @DisplayName, @AvatarUrl, @Bio, @UpdatedAt)
-            END";
-
-        using var connection = _connectionFactory.CreateConnection();
-        
-        var rowsAffected = await connection.ExecuteAsync(sql, profile);
-        return rowsAffected > 0;
-    }
+    /// <summary>
+    /// Xóa tài khoản khỏi hệ thống (Hỗ trợ ON DELETE CASCADE tự động dọn sạch dữ liệu liên quan ở bảng khác)
+    /// </summary>
+    Task<bool> DeleteAsync(int id);
 }
