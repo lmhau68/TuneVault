@@ -47,7 +47,7 @@ public class NotificationRepository : INotificationRepository
     public async Task<bool> CreateNotificationAsync(int userId, string title, string message, string type, int relatedId)
     {
         string sql = @"
-            INSERT INTO Notifications (UserId, Title, Message, NotificationType, RelatedEntityId, IsRead, CreatedAt)
+            INSERT INTO Notifications (UserId, Title, Message, NotificationType, RelatedEntityId AS RelatedId, IsRead, CreatedAt)
             VALUES (@UserId, @Title, @Message, @NotificationType, @RelatedId, 0, GETDATE());";
 
         using (var conn = _connFactory.CreateConnection())
