@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.Application.DTOs.Auth;
-using TuneVault.Application.Interfaces;
+using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
 
@@ -8,9 +8,10 @@ namespace TuneVault.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly AuthService _authService;
 
-    public AuthController(IAuthService authService)
+    // Sử dụng Dependency Injection trực tiếp lớp AuthService cụ thể
+    public AuthController(AuthService authService)
     {
         _authService = authService;
     }
@@ -22,7 +23,7 @@ public class AuthController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            // Trả về lỗi 409 nếu phát hiện trùng lặp Email đăng ký bài bản
+            // Trả về mã lỗi 409 Conflict khi phát hiện trùng Email trong hệ thống
             if (result.ErrorCode == "DuplicateEmail")
             {
                 return Conflict(new { Message = result.Message });
@@ -41,7 +42,7 @@ public class AuthController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            // Trả về lỗi 401 nếu sai mật khẩu hoặc không có tài khoản tương ứng
+            // Trả về mã lỗi 401 Unauthorized khi sai thông tin tài khoản hoặc mật khẩu
             if (result.ErrorCode == "InvalidCredentials")
             {
                 return Unauthorized(new { Message = result.Message });
@@ -50,7 +51,7 @@ public class AuthController : ControllerBase
             return BadRequest(new { Message = result.Message });
         }
 
-        // Trả về mã lỗi 200 kèm theo Token khi xác thực thành công
+        // Trả về mã thành công 200 kèm chuỗi mã hóa Token hợp lệ
         return Ok(new 
         { 
             Message = result.Message, 
