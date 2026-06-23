@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using TuneVault.API.DTOs;
-using TuneVault.API.Services;
+using TuneVault.Application.DTOs.Auth;
+using TuneVault.Application.Interfaces;
 
 namespace TuneVault.API.Controllers;
 
@@ -10,25 +10,36 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
 
-    // Sử dụng Dependency Injection để tiêm Service vào Controller
+    // Dependency Injection
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequestDto registerDto)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
     {
-        // Controller chỉ làm nhiệm vụ chuyển tiếp request xuống lớp Service xử lý
-        AuthResponseDto result = await _authService.RegisterAsync(registerDto);
-        return Ok(result);
+        // Sử dụng var và async/await
+        var response = await _authService.LoginAsync(request);
+
+        if (!response.IsSuccess)
+        {
+            return Unauthorized(response);
+        }
+
+        return Ok(response);
     }
 
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
     {
-        // Áp dụng async/await xử lý bất đồng bộ
-        AuthResponseDto result = await _authService.LoginAsync(loginDto);
-        return Ok(result);
+        var response = await _authService.RegisterAsync(request);
+
+        if (!response.IsSuccess)
+        {
+            return BadRequest(response);
+        }
+
+        return Ok(response);
     }
 }
