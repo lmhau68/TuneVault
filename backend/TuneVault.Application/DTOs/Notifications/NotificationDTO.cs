@@ -1,10 +1,7 @@
-using System.Security.Cryptography.X509Certificates;
+namespace TuneVault.Application.DTOs.Notifications;
 
-namespace TuneVault.Domain.Entities;
-
-public class Notification
+public class NotificationDto
 {
-    // TODO: Map voi bang tuong ung trong database/schema.sql
     public int Id { get; set; }
     public int UserId { get; set; }
     public string? Title { get; set; }
@@ -12,5 +9,5 @@ public class Notification
     public string? NotificationType { get; set; }
     public int RelatedId { get; set; }
     public bool IsRead { get; set; }
-    public DateTime CreatedAt{ get; set; }
+    public DateTime CreatedAt { get; set; }
 }

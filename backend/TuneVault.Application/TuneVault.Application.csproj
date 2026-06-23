@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+<<<<<<< HEAD
   
   <ItemGroup>
     <ProjectReference Include="..\TuneVault.Domain\TuneVault.Domain.csproj" />
@@ -14,4 +15,12 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+=======
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TuneVault.Domain\TuneVault.Domain.csproj" />
+  </ItemGroup>
+>>>>>>> main
 </Project>

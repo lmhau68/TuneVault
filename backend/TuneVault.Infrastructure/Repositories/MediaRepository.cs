@@ -1,14 +1,11 @@
-using Dapper;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using TuneVault.Application.Interfaces;
-using TuneVault.Domain.Entities;
 
 namespace TuneVault.Infrastructure.Repositories;
 
 public class MediaRepository : IMediaRepository
 {
     // TODO: Viet SQL Dapper cho MediaRepository
+<<<<<<< HEAD
     // Dï¿½ng IDbConnectionFactory de mo ket noi database
     private readonly IDbConnectionFactory _connectionFactory;
 
@@ -81,3 +78,7 @@ public class MediaRepository : IMediaRepository
             return await connection.QueryAsync<MediaItem>(query, new { Keyword = $"%{keyword}%" });
         }
 }
+=======
+    // Dùng IDbConnectionFactory de mo ket noi database
+}
+>>>>>>> main

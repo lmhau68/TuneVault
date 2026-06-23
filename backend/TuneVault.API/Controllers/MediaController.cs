@@ -1,8 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
-using System.Threading.Tasks;
-using TuneVault.Application.DTOs.Media;
-using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
 
