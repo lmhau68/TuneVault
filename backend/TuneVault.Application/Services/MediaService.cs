@@ -1,9 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using TuneVault.Application.DTOs.Media;
+using TuneVault.Application.Interfaces;
+using TuneVault.Domain.Entities;
+
 namespace TuneVault.Application.Services;
 
 public class MediaService
 {
     // TODO: Xu ly logic nghiep vu cho module Media
-<<<<<<< HEAD
+
     private readonly IMediaRepository _mediaRepository;
 
         public MediaService(IMediaRepository mediaRepository)
@@ -115,6 +124,4 @@ public class MediaService
                 Genre = media.Genre
             };
         }
-=======
->>>>>>> main
 }

@@ -1,8 +1,8 @@
+using System;
 namespace TuneVault.Domain.Entities;
 
 public class MediaItem
 {
-<<<<<<< HEAD
     public int Id { get; set; }
 
     public int OwnerUserId { get; set; }
@@ -32,7 +32,3 @@ public class MediaItem
     public DateTime? UpdatedAt { get; set; }
 
 }
-=======
-    // TODO: Map voi bang tuong ung trong database/schema.sql
-}
->>>>>>> main
