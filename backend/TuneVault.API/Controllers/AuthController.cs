@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.Application.DTOs.Auth;
-using TuneVault.Application.Services;
+using TuneVault.Application.Interfaces;
 
 namespace TuneVault.API.Controllers;
 
@@ -8,38 +8,53 @@ namespace TuneVault.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
-    // Dependency Injection
-    public AuthController(AuthService authService)
+    public AuthController(IAuthService authService)
     {
         _authService = authService;
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
-    {
-        // Sử dụng var và async/await
-        var response = await _authService.LoginAsync(request);
-
-        if (!response.IsSuccess)
-        {
-            return Unauthorized(response);
-        }
-
-        return Ok(response);
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
     {
-        var response = await _authService.RegisterAsync(request);
+        var result = await _authService.RegisterAsync(request);
 
-        if (!response.IsSuccess)
+        if (!result.IsSuccess)
         {
-            return BadRequest(response);
+            // Trả về lỗi 409 nếu phát hiện trùng lặp Email đăng ký bài bản
+            if (result.ErrorCode == "DuplicateEmail")
+            {
+                return Conflict(new { Message = result.Message });
+            }
+
+            return BadRequest(new { Message = result.Message });
         }
 
-        return Ok(response);
+        return Ok(new { Message = result.Message });
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
+    {
+        var result = await _authService.LoginAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            // Trả về lỗi 401 nếu sai mật khẩu hoặc không có tài khoản tương ứng
+            if (result.ErrorCode == "InvalidCredentials")
+            {
+                return Unauthorized(new { Message = result.Message });
+            }
+
+            return BadRequest(new { Message = result.Message });
+        }
+
+        // Trả về mã lỗi 200 kèm theo Token khi xác thực thành công
+        return Ok(new 
+        { 
+            Message = result.Message, 
+            Token = result.Token 
+        });
     }
 }
