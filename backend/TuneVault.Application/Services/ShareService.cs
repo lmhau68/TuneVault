@@ -49,7 +49,7 @@ public class ShareService
         
         //lưu lại thông báo
         string title = "Bạn có media mới được chia sẻ";
-        string message = $"N{senderName} đã chia sẽ một media cho bạn";
+        string message = $"{senderName} đã chia sẽ một media cho bạn";
 
         int relatedEntityId = request.MediaItemId > 0 ? request.MediaItemId : request.PlaylistId;
         await _notificationRepo.CreateNotificationAsync(
