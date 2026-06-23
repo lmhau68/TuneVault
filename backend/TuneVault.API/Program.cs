@@ -6,6 +6,8 @@ using TuneVault.Application.Interfaces;
 using TuneVault.Application.Services;
 using TuneVault.Infrastructure.Data;
 using TuneVault.Infrastructure.Repositories;
+using TuneVault.Infrastructure.Hubs;        
+using TuneVault.Infrastructure.Hubs.Service; 
 
 namespace TuneVault;
 public class Program
@@ -19,7 +21,12 @@ public class Program
         builder.Services.AddScoped<IUserRepository, UserRepository>();
         builder.Services.AddScoped<AuthService>();
         builder.Services.AddScoped<UserService>();
-
+        builder.Services.AddScoped<IShareRepository, ShareRepository>();
+        builder.Services.AddScoped<ShareService>();
+        builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+        builder.Services.AddScoped<NotificationService>();
+        builder.Services.AddSignalR();
+        builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
         // 2. JWT AUTHENTICATION
         var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Missing Jwt:Key");
         var jwtIssuer = builder.Configuration["Jwt:Issuer"];
@@ -61,11 +68,10 @@ public class Program
             });
 
             options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+                {
+                    [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+                });
             });
-        });
-        // 4. MIDDLEWARE PIPELINE
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -81,6 +87,10 @@ public class Program
         app.UseAuthorization();
 
         app.MapControllers();
-        app.Run();
+    // --- Đặt các route của Hub trước ---
+    app.MapHub<NotificationHub>("/hubs/notifications");
+
+    // --- Cuối cùng mới đến lệnh chạy app ---
+    app.Run();
     }
 }
