@@ -32,7 +32,7 @@ public class ShareService
         return await _shareRepo.GetSharedByMeAsync(currentUserId);
     }
 
-    public async Task<ShareResponse> ShareMediaAsync(int senderId,CreateShareRequest request)
+    public async Task<ShareResponse> ShareMediaAsync(int senderId,string senderName,CreateShareRequest request)
     {
         //lưu lượt chia sẻ
         var shareEntity = new MediaShare
@@ -49,7 +49,7 @@ public class ShareService
         
         //lưu lại thông báo
         string title = "Bạn có media mới được chia sẻ";
-        string message = $"N{senderId} đã chia sẽ một media cho bạn"; // tạm đẻ sau thay đổi lại senderId bằng tên tài khoản và xác định được item gửi là gì
+        string message = $"{senderName} đã chia sẽ một media cho bạn";
 
         int relatedEntityId = request.MediaItemId > 0 ? request.MediaItemId : request.PlaylistId;
         await _notificationRepo.CreateNotificationAsync(

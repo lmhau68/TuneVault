@@ -47,11 +47,13 @@ public class SharesController : ControllerBase
     public async Task<IActionResult> CreateAsync([FromBody] CreateShareRequest request)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        var userNameClaim = User.FindFirst(ClaimTypes.Name);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
         {
             return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
         }
-        var response = await _shareService.ShareMediaAsync(currentUserId, request);
+        string senderName = userNameClaim?.Value ?? "Một người bạn";
+        var response = await _shareService.ShareMediaAsync(currentUserId,senderName, request);
         return Ok(response);
     }
 
