@@ -1,40 +1,31 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using TuneVault.Domain.Entities; // Giả định đây là nơi bạn định nghĩa thực thể User từ Database Schema
+using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Interfaces;
 
 public interface IUserRepository
 {
     /// <summary>
-    /// Tìm kiếm người dùng bằng ID (Phục vụ hiển thị thông tin chi tiết và kiểm tra quyền)
+    /// Lấy thông tin User kèm theo UserProfile (nếu có) dựa vào Id.
     /// </summary>
     Task<User?> GetByIdAsync(int id);
 
     /// <summary>
-    /// Tìm kiếm người dùng qua Email (Phục vụ luồng Đăng nhập và kiểm tra trùng lặp khi Đăng ký)
+    /// Lấy thông tin User dựa vào Email (thường dùng cho đăng nhập hoặc kiểm tra tồn tại).
     /// </summary>
     Task<User?> GetByEmailAsync(string email);
 
     /// <summary>
-    /// Thêm mới một tài khoản vào hệ thống (Phục vụ luồng Đăng ký)
+    /// Tạo tài khoản User mới và trả về Id vừa được tạo.
     /// </summary>
-    /// <returns>Trả về Id tự tăng (IDENTITY) vừa được sinh ra trong Database</returns>
     Task<int> CreateAsync(User user);
 
     /// <summary>
-    /// Cập nhật thông tin cơ bản của tài khoản (Email, DisplayName,...)
+    /// Cập nhật (hoặc thêm mới) thông tin hồ sơ của User.
     /// </summary>
-    /// <returns>Trả về true nếu cập nhật thành công</returns>
-    Task<bool> UpdateAsync(User user);
+    Task<bool> UpdateProfileAsync(int userId, UserProfile profile);
 
     /// <summary>
-    /// Tìm kiếm danh sách người dùng theo tên hiển thị (Phục vụ tính năng tìm kiếm User/Artist trên TuneVault)
+    /// Lấy danh sách toàn bộ Users trong hệ thống (sắp xếp theo ngày tạo mới nhất).
     /// </summary>
-    Task<IEnumerable<User>> SearchByDisplayNameAsync(string query);
-
-    /// <summary>
-    /// Xóa tài khoản khỏi hệ thống (Hỗ trợ ON DELETE CASCADE tự động dọn sạch dữ liệu liên quan ở bảng khác)
-    /// </summary>
-    Task<bool> DeleteAsync(int id);
+    Task<IEnumerable<User>> GetAllUsersAsync();
 }
