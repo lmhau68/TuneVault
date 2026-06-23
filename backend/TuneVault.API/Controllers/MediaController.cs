@@ -48,11 +48,20 @@ public class MediaController : ControllerBase
             // Chỉ cho upload mp3/mp4
             var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
 
-            var allowedExtensions = new[] { ".mp3", ".mp4" };
+            var allowedExtensions = new[]
+            {
+                ".mp3",
+                ".wav",
+                ".mp4",
+                ".avi",
+                ".mov"
+            };
 
             if (!allowedExtensions.Contains(extension))
             {
-                return BadRequest("Only .mp3 and .mp4 files are allowed.");
+                return BadRequest(
+                    "Only .mp3, .wav, .mp4, .avi and .mov files are allowed."
+                );
             }
             
             var result = await _mediaService.UploadMediaAsync(request, currentUserId);
