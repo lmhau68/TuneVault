@@ -6,8 +6,10 @@ using TuneVault.Application.Interfaces;
 using TuneVault.Application.Services;
 using TuneVault.Infrastructure.Data;
 using TuneVault.Infrastructure.Repositories;
+
 using TuneVault.Infrastructure.Hubs;        
 using TuneVault.Infrastructure.Hubs.Service; 
+
 
 namespace TuneVault;
 public class Program
@@ -25,6 +27,8 @@ public class Program
         builder.Services.AddScoped<ShareService>();
         builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
         builder.Services.AddScoped<NotificationService>();
+        builder.Services.AddScoped<IMediaRepository, MediaRepository>();
+        builder.Services.AddScoped<MediaService>();
         builder.Services.AddSignalR();
         builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
         // 2. JWT AUTHENTICATION
