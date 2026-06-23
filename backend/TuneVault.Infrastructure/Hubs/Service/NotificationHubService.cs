@@ -24,4 +24,17 @@ public class NotificationHubService : INotificationHubService
             Timestamp = DateTime.UtcNow
         });
     }
+
+    public async Task SendNotificationToGroupAsync(int creatorId, string title, string message)
+    {
+        // Tên group này phải khớp với tên lúc user Subscribe trong file NotificationHub.cs
+        string groupName = $"followers_of_{creatorId}";
+
+        await _hubContext.Clients.Group(groupName).SendAsync("ReceiveNotification", new
+        {
+            Title = title,
+            Message = message,
+            Timestamp = DateTime.UtcNow
+        });
+    }
 }
