@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.Application.DTOs.User;
-using TuneVault.Application.Interfaces;
+using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
 
@@ -11,9 +11,9 @@ namespace TuneVault.API.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly UserService _userService;
 
-    public UsersController(IUserService userService)
+    public UsersController(UserService userService)
     {
         _userService = userService;
     }
@@ -41,7 +41,7 @@ public class UsersController : ControllerBase
 
     // ĐÃ FIX LỖI IDOR: Xóa {id} khỏi URL. Route giờ chỉ còn /api/users/profile
     [HttpPut("profile")]
-    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDto request)
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDTO request)
     {
         // Tự động "móc" ID của người dùng từ chính Token họ gửi lên
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

@@ -1,106 +1,86 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using TuneVault.Application.Interfaces;
 using TuneVault.Application.Services;
 using TuneVault.Infrastructure.Data;
 using TuneVault.Infrastructure.Repositories;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// =========================================================================
-// 1. ĐĂNG KÝ DEPENDENCY INJECTION (DI)
-// =========================================================================
-
-// Đúng theo class mới của bạn: Bộ DI sẽ tự nạp IConfiguration vào SqlConnectionFactory
-builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-// Đăng ký các tầng xử lý logic nghiệp vụ (Application Services)
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IUserService, UserService>();
-
-
-// =========================================================================
-// 2. CẤU HÌNH HỆ THỐNG XÁC THỰC VÀ PHÂN QUYỀN JWT
-// =========================================================================
-var jwtKey = builder.Configuration["Jwt:Key"] 
-    ?? throw new InvalidOperationException("Cấu hình 'Jwt:Key' không tìm thấy trong hệ thống.");
-var jwtIssuer = builder.Configuration["Jwt:Issuer"];
-var jwtAudience = builder.Configuration["Jwt:Audience"];
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
-
-builder.Services.AddAuthorization();
-
-
-// =========================================================================
-// 3. CẤU HÌNH CONTROLLERS VÀ TÀI LIỆU SWAGGER (CÓ TRÌNH NHẬP TOKEN)
-// =========================================================================
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen(options =>
+namespace TuneVault;
+public class Program
 {
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "TuneVault API", Version = "v1" });
-    
-    // Tích hợp giao diện nhập Token khóa bảo mật trực tiếp trên trình duyệt
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    public static void Main(string[] args)
     {
-        Description = "Nhập mã Token theo định dạng: Bearer {chuỗi_token_jwt}",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer"
-    });
+        var builder = WebApplication.CreateBuilder(args);
 
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
+        // 1. DEPENDENCY INJECTION
+        builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
+        builder.Services.AddScoped<IUserRepository, UserRepository>();
+        builder.Services.AddScoped<AuthService>();
+        builder.Services.AddScoped<UserService>();
+
+        // 2. JWT AUTHENTICATION
+        var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Missing Jwt:Key");
+        var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+        var jwtAudience = builder.Configuration["Jwt:Audience"];
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                Reference = new OpenApiReference
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtIssuer,
+                    ValidAudience = jwtAudience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+                };
+            });
+
+        // 3. CONTROLLERS & SWAGGER
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo 
+            { 
+                Title = "TuneVault API", 
+                Version = "v1" 
+            });
+
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                Description = "Nhập mã Token theo định dạng: Bearer {token}",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Scheme = "Bearer"
+            });
+
+            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            });
+        });
+        // 4. MIDDLEWARE PIPELINE
+        var app = builder.Build();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
-    });
-});
 
-var app = builder.Build();
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();
 
-// =========================================================================
-// 4. THIẾT LẬP MIDDLEWARE PIPELINE (QUY TRÌNH XỬ LÝ REQUEST)
-// =========================================================================
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
+        app.UseAuthentication(); 
+        app.UseAuthorization();
+
+        app.MapControllers();
+        app.Run();
+    }
 }
-
-app.UseHttpsRedirection();
-
-// QUY TẮC AN TOÀN: Luôn đặt UseAuthentication() TRƯỚC UseAuthorization()
-app.UseAuthentication(); 
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();

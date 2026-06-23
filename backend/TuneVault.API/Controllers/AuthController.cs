@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.Application.DTOs.Auth;
-using TuneVault.Application.Interfaces;
+using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
 
@@ -8,16 +8,16 @@ namespace TuneVault.API.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly AuthService _authService;
 
     // Dependency Injection
-    public AuthController(IAuthService authService)
+    public AuthController(AuthService authService)
     {
         _authService = authService;
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
     {
         // Sử dụng var và async/await
         var response = await _authService.LoginAsync(request);
@@ -31,7 +31,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
     {
         var response = await _authService.RegisterAsync(request);
 
