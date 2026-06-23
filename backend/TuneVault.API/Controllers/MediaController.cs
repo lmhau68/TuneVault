@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using TuneVault.Application.DTOs.Media;
 using TuneVault.Application.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace TuneVault.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class MediaController : ControllerBase
@@ -20,7 +23,37 @@ public class MediaController : ControllerBase
         public async Task<IActionResult> Upload([FromForm] UploadMediaRequest request)
         {
             // Tạm thời hardcode userId = 1 để test, sau này Bạn A làm xong Auth sẽ lấy từ JWT Token
-            int currentUserId = 1; 
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+
+            var currentUserId = int.Parse(userIdClaim.Value);
+            // Kiểm tra file
+            if (request.File == null || request.File.Length == 0)
+            {
+                return BadRequest("File is required.");
+            }
+
+            // Giới hạn 50MB
+            const long maxSize = 50 * 1024 * 1024;
+
+            if (request.File.Length > maxSize)
+            {
+                return BadRequest("File size exceeds 50MB.");
+            }
+
+            // Chỉ cho upload mp3/mp4
+            var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
+
+            var allowedExtensions = new[] { ".mp3", ".mp4" };
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                return BadRequest("Only .mp3 and .mp4 files are allowed.");
+            }
             
             var result = await _mediaService.UploadMediaAsync(request, currentUserId);
             return Ok(result);
