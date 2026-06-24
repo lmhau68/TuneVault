@@ -22,7 +22,6 @@ public class MediaController : ControllerBase
         [HttpPost("upload")]
         public async Task<IActionResult> Upload([FromForm] UploadMediaRequest request)
         {
-            // Tạm thời hardcode userId = 1 để test, sau này Bạn A làm xong Auth sẽ lấy từ JWT Token
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
 
             if (userIdClaim == null)

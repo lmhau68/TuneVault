@@ -14,10 +14,12 @@ public class MediaService
     // TODO: Xu ly logic nghiep vu cho module Media
 
     private readonly IMediaRepository _mediaRepository;
+    private readonly INotificationHubService _notificationHubService;
 
-        public MediaService(IMediaRepository mediaRepository)
+        public MediaService(IMediaRepository mediaRepository,INotificationHubService notificationHubService)
         {
             _mediaRepository = mediaRepository;
+            _notificationHubService = notificationHubService;
         }
 
         public async Task<MediaResponse> UploadMediaAsync(UploadMediaRequest request, int userId)
@@ -77,6 +79,21 @@ public class MediaService
 
             var newId = await _mediaRepository.CreateAsync(media);
             media.Id = newId;
+            
+            // --- DÙNG TRY-CATCH BỌC LẠI ĐỂ BẢO VỆ LUỒNG CHÍNH ---
+            try 
+            {
+                await _notificationHubService.SendNotificationToGroupAsync(
+                    userId,
+                    "New Media Upload",
+                    $"{media.Title} has been uploaded."
+                );
+            }
+            catch (Exception ex)
+            {
+                // Chỉ ghi log lỗi ra Console/File
+                Console.WriteLine($"[CẢNH BÁO] Lỗi bắn thông báo SignalR cho user {userId}: {ex.Message}");
+            }
 
             // 3. Trả về Response
             return new MediaResponse
