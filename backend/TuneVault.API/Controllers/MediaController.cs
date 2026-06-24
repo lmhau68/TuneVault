@@ -90,6 +90,7 @@ public class MediaController : ControllerBase
         }
 
         // API quan trọng để stream nhạc/video
+        [AllowAnonymous]
         [HttpGet("{id}/stream")]
         public async Task<IActionResult> Stream(int id)
         {
