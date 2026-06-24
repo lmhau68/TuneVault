@@ -1,11 +1,14 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TuneVault.Application.DTOs;
 using TuneVault.Application.Services;
-using TuneVault.Domain.Entities;
 
 namespace TuneVault.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class HistoriesController : ControllerBase
 {
     private readonly HistoryService _historyService;
@@ -15,17 +18,48 @@ public class HistoriesController : ControllerBase
         _historyService = historyService;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> AddHistory(PlayHistory history)
+    private int GetCurrentUserId()
     {
-        await _historyService.AddHistoryAsync(history);
-        return Ok();
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (claim == null) throw new UnauthorizedAccessException("Không xác định được người dùng.");
+        return int.Parse(claim);
     }
 
-    [HttpGet("{userId}")]
-    public async Task<IActionResult> GetHistory(int userId)
+    // GET api/histories?limit=10
+    // Lấy lịch sử nghe gần đây (mặc định 10 bài theo yêu cầu đề)
+    [HttpGet]
+    public async Task<IActionResult> GetRecentHistory([FromQuery] int limit = 10)
     {
-        var result = await _historyService.GetHistoryByUserAsync(userId);
-        return Ok(result);
+        var userId = GetCurrentUserId();
+        var history = await _historyService.GetRecentHistoryAsync(userId, limit);
+        return Ok(new { success = true, data = history });
+    }
+
+    // POST api/histories
+    // Ghi lịch sử khi bắt đầu phát — frontend gọi endpoint này mỗi khi play
+    [HttpPost]
+    public async Task<IActionResult> RecordHistory([FromBody] RecordPlayHistoryRequestDto request)
+    {
+        var userId = GetCurrentUserId();
+
+        try
+        {
+            await _historyService.RecordPlayHistoryAsync(userId, request);
+            return Ok(new { success = true, data = "Đã ghi lịch sử." });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { success = false, errors = ex.Message });
+        }
+    }
+
+    // DELETE api/histories
+    // Xóa toàn bộ lịch sử nghe của user
+    [HttpDelete]
+    public async Task<IActionResult> ClearHistory()
+    {
+        var userId = GetCurrentUserId();
+        await _historyService.ClearHistoryAsync(userId);
+        return Ok(new { success = true, data = "Đã xóa toàn bộ lịch sử." });
     }
 }

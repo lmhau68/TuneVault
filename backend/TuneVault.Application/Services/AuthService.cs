@@ -6,121 +6,115 @@ using Microsoft.IdentityModel.Tokens;
 using TuneVault.Application.DTOs.Auth;
 using TuneVault.Application.Interfaces;
 using TuneVault.Domain.Entities;
+using BCryptNet = BCrypt.Net.BCrypt;
 
 namespace TuneVault.Application.Services;
 
-// (Nên đặt IAuthService ở chung file này hoặc tách ra file IAuthService.cs trong thư mục Services)
-public interface IAuthService
-{
-    Task<AuthResponse> RegisterAsync(RegisterRequest request);
-    Task<AuthResponse> LoginAsync(LoginRequest request);
-}
-
-public class AuthService : IAuthService
+public class AuthService
 {
     private readonly IUserRepository _userRepository;
     private readonly IConfiguration _configuration;
 
-    // Tiêm IUserRepository để thao tác DB và IConfiguration để lấy SecretKey tạo JWT
     public AuthService(IUserRepository userRepository, IConfiguration configuration)
     {
         _userRepository = userRepository;
         _configuration = configuration;
     }
 
-    public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+    public async Task<AuthResultDto> RegisterAsync(RegisterRequestDTO request)
     {
-        // 1. Kiểm tra Username đã tồn tại chưa
-        var existingUser = await _userRepository.GetUserByUsernameAsync(request.Username);
+        // Sử dụng câu lệnh Dapper qua Repository để kiểm tra trùng lặp Email
+        var existingUser = await _userRepository.GetByEmailAsync(request.Email);
         if (existingUser != null)
         {
-            return new AuthResponse 
-            { 
-                Success = false, 
-                Message = "Tên đăng nhập đã tồn tại trên hệ thống." 
+            return new AuthResultDto
+            {
+                IsSuccess = false,
+                Message = "Email này đã được đăng ký sử dụng trong hệ thống.",
+                ErrorCode = "DuplicateEmail"
             };
         }
 
-        // 2. Tạo Entity mới và băm mật khẩu
+        // Ứng dụng BCrypt để băm mật khẩu an toàn
+        var passwordHash = BCryptNet.HashPassword(request.Password);
+
         var newUser = new User
         {
-            Username = request.Username,
             Email = request.Email,
-            // Yêu cầu cài đặt NuGet package: BCrypt.Net-Next
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password), 
-            CreatedAt = DateTime.UtcNow
+            PasswordHash = passwordHash,
+            DisplayName = request.DisplayName
         };
 
-        // 3. Gọi Repository lưu vào Database
-        var isCreated = await _userRepository.CreateUserAsync(newUser);
-        if (!isCreated)
-        {
-            return new AuthResponse 
-            { 
-                Success = false, 
-                Message = "Đã xảy ra lỗi khi tạo tài khoản vào cơ sở dữ liệu." 
-            };
-        }
+        // Lưu thông tin xuống cơ sở dữ liệu qua lệnh INSERT Dapper
+        await _userRepository.CreateAsync(newUser);
 
-        return new AuthResponse 
-        { 
-            Success = true, 
-            Message = "Đăng ký tài khoản thành công!" 
+        return new AuthResultDto
+        {
+            IsSuccess = true,
+            Message = "Đăng ký tài khoản thành công."
         };
     }
 
-    public async Task<AuthResponse> LoginAsync(LoginRequest request)
+    public async Task<AuthResultDto> LoginAsync(LoginRequestDTO request)
     {
-        // 1. Tìm user theo username
-        var user = await _userRepository.GetUserByUsernameAsync(request.Username);
-
-        // 2. Kiểm tra tồn tại và verify mật khẩu đã băm
-        if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        var user = await _userRepository.GetByEmailAsync(request.Email);
+        if (user == null)
         {
-            return new AuthResponse 
-            { 
-                Success = false, 
-                Message = "Tài khoản hoặc mật khẩu không chính xác." 
+            return new AuthResultDto
+            {
+                IsSuccess = false,
+                Message = "Tài khoản hoặc mật khẩu không chính xác.",
+                ErrorCode = "InvalidCredentials"
             };
         }
 
-        // 3. Tạo JWT Token
+        // Xác thực chuỗi mật khẩu mã hóa
+        var isPasswordValid = BCryptNet.Verify(request.Password, user.PasswordHash);
+        if (!isPasswordValid)
+        {
+            return new AuthResultDto
+            {
+                IsSuccess = false,
+                Message = "Tài khoản hoặc mật khẩu không chính xác.",
+                ErrorCode = "InvalidCredentials"
+            };
+        }
+
+        // Khởi tạo mã Token thời hạn đúng 1 tiếng
         var token = GenerateJwtToken(user);
 
-        return new AuthResponse 
-        { 
-            Success = true, 
-            Message = "Đăng nhập thành công!", 
-            Token = token 
+        return new AuthResultDto
+        {
+            IsSuccess = true,
+            Token = token,
+            Message = "Đăng nhập thành công."
         };
     }
 
-    // Hàm private hỗ trợ tạo JWT Token
     private string GenerateJwtToken(User user)
     {
-        // Lấy config từ appsettings.json, nếu không có thì dùng chuỗi mặc định (chỉ cho dev)
-        var jwtSettings = _configuration.GetSection("JwtSettings");
-        var secretKey = jwtSettings["SecretKey"] ?? "Day_La_Mot_Chuoi_Bi_Mat_Rat_Dai_Cho_JWT_Token_TuneVault";
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Thiếu cấu hình Jwt:Key.");
+        var issuer = _configuration["Jwt:Issuer"];
+        var audience = _configuration["Jwt:Audience"];
 
-        // Các thông tin (Claims) giấu trong Payload của Token
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+        // ĐÁP ỨNG ĐÚNG TIÊU CHUẨN: Ép kiểu Số Nguyên (user.Id.ToString()) vào ClaimTypes.NameIdentifier
+        // Giúp MediaController chạy hàm int.Parse(...) trơn tru không sập lỗi Format
         var claims = new[]
         {
-            // BẮT BUỘC: Nhét Id vào NameIdentifier để UsersController có thể trích xuất qua `User.FindFirst(ClaimTypes.NameIdentifier)`
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName)
         };
 
         var token = new JwtSecurityToken(
-            issuer: jwtSettings["Issuer"] ?? "TuneVaultAPI",
-            audience: jwtSettings["Audience"] ?? "TuneVaultClient",
+            issuer: issuer,
+            audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(2), // Token sống 2 tiếng
-            signingCredentials: creds
-        );
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

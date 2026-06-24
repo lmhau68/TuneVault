@@ -1,0 +1,9 @@
+namespace TuneVault.Application.DTOs.Shares;
+
+public record ShareResponse(int Id,
+                            int SenderUserId,
+                            int ReceiverUserId,
+                            int MediaItemId,
+                            int PlaylistId,
+                            string? Message,
+                            DateTime SharedAt);

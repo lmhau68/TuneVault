@@ -1,24 +1,39 @@
+using TuneVault.Application.DTOs;
 using TuneVault.Application.Interfaces;
-using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Services;
 
 public class HistoryService
 {
     private readonly IHistoryRepository _historyRepository;
+    private readonly IMediaRepository _mediaRepository;
 
-    public HistoryService(IHistoryRepository historyRepository)
+    public HistoryService(IHistoryRepository historyRepository, IMediaRepository mediaRepository)
     {
         _historyRepository = historyRepository;
+        _mediaRepository = mediaRepository;
     }
 
-    public async Task AddHistoryAsync(PlayHistory history)
+    // Lấy 10 bài nghe gần nhất (theo yêu cầu đề bài)
+    public async Task<List<PlayHistoryResponseDto>> GetRecentHistoryAsync(int userId, int limit = 10)
     {
-        await _historyRepository.AddAsync(history);
+        return await _historyRepository.GetRecentHistoryAsync(userId, limit);
     }
 
-    public async Task<IEnumerable<PlayHistory>> GetHistoryByUserAsync(int userId)
+    // Ghi lịch sử khi user bắt đầu phát hoặc cập nhật tiến độ
+    public async Task RecordPlayHistoryAsync(int userId, RecordPlayHistoryRequestDto request)
     {
-        return await _historyRepository.GetByUserAsync(userId);
+        // Validate media tồn tại trước khi ghi
+        var mediaExists = await _mediaRepository.ExistsAsync(request.MediaItemId);
+        if (!mediaExists)
+            throw new KeyNotFoundException($"Không tìm thấy media với Id = {request.MediaItemId}.");
+
+        await _historyRepository.RecordAsync(userId, request.MediaItemId, request.ProgressInSeconds);
+    }
+
+    // Xóa toàn bộ lịch sử của user
+    public async Task ClearHistoryAsync(int userId)
+    {
+        await _historyRepository.ClearHistoryAsync(userId);
     }
 }
