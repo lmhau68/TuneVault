@@ -2,7 +2,8 @@
 -- TuneVault Seed Data
 -- Chạy sau khi đã chạy schema.sql
 -- =============================================
-
+USE TuneVaultDB;
+GO
 -- Users mẫu
 INSERT INTO Users (Email, PasswordHash, DisplayName)
 VALUES

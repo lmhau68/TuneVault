@@ -2,5 +2,6 @@ namespace TuneVault.Application.Interfaces;
 
 public interface IHistoryRepository
 {
-    // TODO: Khai bao cac method cho HistoryRepository
+    // Lấy danh sách thể loại user nghe gần đây nhất
+    Task<List<string>> GetRecentGenresAsync(int userId, int limit = 5);
 }
