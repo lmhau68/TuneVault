@@ -18,6 +18,22 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+        // Nâng giới hạn dung lượng request body lên 50MB cho Kestrel Server
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.Limits.MaxRequestBodySize = 52428800; // 50 * 1024 * 1024 bytes
+        });
+        // Cấu hình CORS cho phép Frontend React truy cập
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowFrontend", policy =>
+            {
+                policy.WithOrigins("http://localhost:3000") // URL của Frontend React
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials(); // Bắt buộc phải có để SignalR kết nối được
+            });
+        });
 
         // 1. DEPENDENCY INJECTION (Gộp của cả main và AI)
         builder.Services.AddSingleton<IDbConnectionFactory, SqlConnectionFactory>();
@@ -66,6 +82,22 @@ public class Program
                     ValidAudience = jwtAudience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
                 };
+                // ĐỌC TOKEN CHO SIGNALR 
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.Request.Path;
+
+                        // Nếu request gọi vào Hub SignalR và có kèm token trên URL
+                        if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                        {
+                            context.Token = accessToken; // Bơm token vào ngữ cảnh xác thực
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
         
         builder.Services.AddAuthorization(); // Thêm cái này của ông
@@ -97,6 +129,11 @@ public class Program
             });
         var app = builder.Build();
 
+        // Kích hoạt CORS (Bắt buộc phải đứng TRƯỚC Authentication và Authorization)
+        app.UseCors("AllowFrontend");
+
+        
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -104,6 +141,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+        // Mở thư mục wwwroot để cho phép tải ảnh bìa, nhạc, video trực tiếp qua link static
         app.UseStaticFiles();
 
         app.UseAuthentication(); 
