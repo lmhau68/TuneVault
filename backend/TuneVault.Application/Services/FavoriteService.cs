@@ -1,29 +1,50 @@
+using TuneVault.Application.DTOs;
 using TuneVault.Application.Interfaces;
-using TuneVault.Domain.Entities;
 
 namespace TuneVault.Application.Services;
 
 public class FavoriteService
 {
     private readonly IFavoriteRepository _favoriteRepository;
+    private readonly IMediaRepository _mediaRepository;
 
-    public FavoriteService(IFavoriteRepository favoriteRepository)
+    public FavoriteService(IFavoriteRepository favoriteRepository, IMediaRepository mediaRepository)
     {
         _favoriteRepository = favoriteRepository;
+        _mediaRepository = mediaRepository;
     }
 
-    public async Task AddFavoriteAsync(Favorite favorite)
+    // Lấy danh sách media yêu thích của user
+    public async Task<List<FavoriteMediaResponseDto>> GetMyFavoritesAsync(int userId, int page, int pageSize)
     {
-        await _favoriteRepository.AddAsync(favorite);
+        return await _favoriteRepository.GetUserFavoritesAsync(userId, page, pageSize);
     }
 
-    public async Task RemoveFavoriteAsync(int userId, int mediaItemId)
+    // Toggle like/unlike với validation media có tồn tại không
+    public async Task<ToggleFavoriteResponseDto> ToggleFavoriteAsync(int userId, int mediaItemId)
     {
-        await _favoriteRepository.RemoveAsync(userId, mediaItemId);
+        // Kiểm tra media có tồn tại không trước khi like
+        var mediaExists = await _mediaRepository.ExistsAsync(mediaItemId);
+        if (!mediaExists)
+            throw new KeyNotFoundException($"Không tìm thấy media với Id = {mediaItemId}.");
+
+        var isNowFavorited = await _favoriteRepository.ToggleFavoriteAsync(userId, mediaItemId);
+
+        return new ToggleFavoriteResponseDto
+        {
+            IsFavorited = isNowFavorited,
+            Message = isNowFavorited ? "Đã thêm vào yêu thích." : "Đã xóa khỏi yêu thích."
+        };
     }
 
-    public async Task<IEnumerable<Favorite>> GetFavoritesByUserAsync(int userId)
+    // Kiểm tra trạng thái like của 1 bài
+    public async Task<FavoriteStatusDto> GetFavoriteStatusAsync(int userId, int mediaItemId)
     {
-        return await _favoriteRepository.GetByUserAsync(userId);
+        var isFavorited = await _favoriteRepository.IsFavoritedAsync(userId, mediaItemId);
+        return new FavoriteStatusDto
+        {
+            MediaItemId = mediaItemId,
+            IsFavorited = isFavorited
+        };
     }
 }

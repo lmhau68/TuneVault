@@ -5,64 +5,57 @@ using TuneVault.Application.Services;
 namespace TuneVault.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] // Route sinh ra sẽ là: /api/auth
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly AuthService _authService;
 
-    // Tiêm Dependency Injection (DI) cho IAuthService
-    public AuthController(IAuthService authService)
+    // Sử dụng Dependency Injection trực tiếp lớp AuthService cụ thể
+    public AuthController(AuthService authService)
     {
         _authService = authService;
     }
 
-    /// <summary>
-    /// API Đăng ký tài khoản mới
-    /// POST: /api/auth/register
-    /// </summary>
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    public async Task<IActionResult> Register([FromBody] RegisterRequestDTO request)
     {
-        // Khuyến khích: Dù [ApiController] tự động validate, vẫn có thể check thủ công nếu cần
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
-        // Gọi Service xử lý nghiệp vụ bất đồng bộ
         var result = await _authService.RegisterAsync(request);
 
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
-            // Trả về HTTP 400 Bad Request nếu đăng ký thất bại (vd: trùng username)
-            return BadRequest(new { message = result.Message });
+            // Trả về mã lỗi 409 Conflict khi phát hiện trùng Email trong hệ thống
+            if (result.ErrorCode == "DuplicateEmail")
+            {
+                return Conflict(new { Message = result.Message });
+            }
+
+            return BadRequest(new { Message = result.Message });
         }
 
-        // Trả về HTTP 200 OK nếu thành công
-        return Ok(result);
+        return Ok(new { Message = result.Message });
     }
 
-    /// <summary>
-    /// API Đăng nhập
-    /// POST: /api/auth/login
-    /// </summary>
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] LoginRequestDTO request)
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
-
         var result = await _authService.LoginAsync(request);
 
-        if (!result.Success)
+        if (!result.IsSuccess)
         {
-            // Trả về HTTP 401 Unauthorized nếu sai tài khoản hoặc mật khẩu
-            return Unauthorized(new { message = result.Message });
+            // Trả về mã lỗi 401 Unauthorized khi sai thông tin tài khoản hoặc mật khẩu
+            if (result.ErrorCode == "InvalidCredentials")
+            {
+                return Unauthorized(new { Message = result.Message });
+            }
+
+            return BadRequest(new { Message = result.Message });
         }
 
-        // Trả về HTTP 200 OK kèm theo Token và thông báo
-        return Ok(result);
+        // Trả về mã thành công 200 kèm chuỗi mã hóa Token hợp lệ
+        return Ok(new 
+        { 
+            Message = result.Message, 
+            Token = result.Token 
+        });
     }
 }

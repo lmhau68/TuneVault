@@ -4,9 +4,15 @@ namespace TuneVault.Application.DTOs.Media
 {
     public class UploadMediaRequest
     {
-        public string Title { get; set; }
-        public IFormFile File { get; set; } // Nhận file từ Client
+
+        public string Title { get; set; } = string.Empty;
+
         public string? Artist { get; set; }
+
         public string? Genre { get; set; }
+
+        public string? Album { get; set; }
+
+        public IFormFile File { get; set; } = default!;
     }
 }

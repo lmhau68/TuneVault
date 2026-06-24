@@ -18,28 +18,9 @@ public class PlaylistRepository : IPlaylistRepository
         using var connection = _connectionFactory.CreateConnection();
 
         var sql = @"
-            INSERT INTO Playlists
-            (
-                UserId,
-                Name,
-                Description,
-                CoverImagePath,
-                IsPublic,
-                CreatedAt,
-                UpdatedAt
-            )
-            VALUES
-            (
-                @UserId,
-                @Name,
-                @Description,
-                @CoverImagePath,
-                @IsPublic,
-                @CreatedAt,
-                @UpdatedAt
-            );
-
-            SELECT CAST(SCOPE_IDENTITY() as int);";
+            INSERT INTO Playlists (UserId, Name, Description, IsPublic, CreatedAt)
+            VALUES (@UserId, @Name, @Description, @IsPublic, @CreatedAt);
+            SELECT CAST(SCOPE_IDENTITY() AS INT);";
 
         return await connection.ExecuteScalarAsync<int>(sql, playlist);
     }
@@ -48,15 +29,54 @@ public class PlaylistRepository : IPlaylistRepository
     {
         using var connection = _connectionFactory.CreateConnection();
 
-        var sql = @"
-            SELECT *
-            FROM Playlists
-            WHERE Id = @Id";
+        var sql = "SELECT * FROM Playlists WHERE Id = @Id";
 
         return await connection.QueryFirstOrDefaultAsync<Playlist>(
-            sql,
-            new { Id = id }
-        );
+            sql, new { Id = id });
+    }
+
+    public async Task<List<Playlist>> GetByUserIdAsync(int userId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            SELECT * FROM Playlists
+            WHERE UserId = @UserId
+            ORDER BY CreatedAt DESC";
+
+        var result = await connection.QueryAsync<Playlist>(
+            sql, new { UserId = userId });
+
+        return result.ToList();
+    }
+
+    public async Task<List<PlaylistTrack>> GetTracksByPlaylistIdAsync(int playlistId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            SELECT * FROM PlaylistTracks
+            WHERE PlaylistId = @PlaylistId
+            ORDER BY Position ASC";
+
+        var result = await connection.QueryAsync<PlaylistTrack>(
+            sql, new { PlaylistId = playlistId });
+
+        return result.ToList();
+    }
+
+    public async Task<bool> TrackExistsAsync(int playlistId, int mediaItemId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            SELECT COUNT(1) FROM PlaylistTracks
+            WHERE PlaylistId = @PlaylistId AND MediaItemId = @MediaItemId";
+
+        var count = await connection.ExecuteScalarAsync<int>(
+            sql, new { PlaylistId = playlistId, MediaItemId = mediaItemId });
+
+        return count > 0;
     }
 
     public async Task AddTrackAsync(PlaylistTrack track)
@@ -64,20 +84,8 @@ public class PlaylistRepository : IPlaylistRepository
         using var connection = _connectionFactory.CreateConnection();
 
         var sql = @"
-            INSERT INTO PlaylistTracks
-            (
-                PlaylistId,
-                MediaItemId,
-                Position,
-                AddedAt
-            )
-            VALUES
-            (
-                @PlaylistId,
-                @MediaItemId,
-                @Position,
-                @AddedAt
-            )";
+            INSERT INTO PlaylistTracks (PlaylistId, MediaItemId, Position, AddedAt)
+            VALUES (@PlaylistId, @MediaItemId, @Position, @AddedAt)";
 
         await connection.ExecuteAsync(sql, track);
     }
@@ -88,13 +96,20 @@ public class PlaylistRepository : IPlaylistRepository
 
         var sql = @"
             DELETE FROM PlaylistTracks
-            WHERE PlaylistId = @PlaylistId
-            AND MediaItemId = @MediaItemId";
+            WHERE PlaylistId = @PlaylistId AND MediaItemId = @MediaItemId";
 
-        await connection.ExecuteAsync(sql, new
-        {
-            PlaylistId = playlistId,
-            MediaItemId = mediaItemId
-        });
+        await connection.ExecuteAsync(
+            sql, new { PlaylistId = playlistId, MediaItemId = mediaItemId });
+    }
+
+    public async Task DeleteAsync(int playlistId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            DELETE FROM PlaylistTracks WHERE PlaylistId = @PlaylistId;
+            DELETE FROM Playlists WHERE Id = @PlaylistId;";
+
+        await connection.ExecuteAsync(sql, new { PlaylistId = playlistId });
     }
 }

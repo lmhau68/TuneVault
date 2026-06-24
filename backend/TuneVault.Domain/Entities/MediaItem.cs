@@ -1,21 +1,34 @@
+using System;
 namespace TuneVault.Domain.Entities;
 
 public class MediaItem
 {
     public int Id { get; set; }
 
+    public int OwnerUserId { get; set; }
+
     public string Title { get; set; } = string.Empty;
-
-    public string FileUrl { get; set; } = string.Empty;
-
-    public int UploadedBy { get; set; }
-
-    public DateTime CreatedAt { get; set; }
 
     public string? Artist { get; set; }
 
     public string? Genre { get; set; }
 
     public string? Album { get; set; }
-}
 
+    public string? Description { get; set; }
+
+    public string MediaType { get; set; } = string.Empty;
+
+    public string FilePath { get; set; } = string.Empty;
+
+    public string? ThumbnailPath { get; set; }
+
+    public int? DurationInSeconds { get; set; }
+
+    public long? FileSizeInBytes { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? UpdatedAt { get; set; }
+
+}

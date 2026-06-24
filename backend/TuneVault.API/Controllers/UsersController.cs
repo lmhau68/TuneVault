@@ -1,78 +1,65 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using TuneVault.Application.DTOs.Users;
+using TuneVault.Application.DTOs.User;
 using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
 
-[Authorize] // Bắt buộc client phải gửi kèm JWT Token hợp lệ trong Header (Authorization: Bearer <token>)
+[Authorize] // BẮT BUỘC: Yêu cầu phải có Token hợp lệ mới được gọi các API trong này
 [ApiController]
-[Route("api/[controller]")] // Route gốc sinh ra sẽ là: /api/users
+[Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly IUserService _userService;
+    private readonly UserService _userService;
 
-    // Tiêm Dependency Injection cho IUserService
-    public UsersController(IUserService userService)
+    public UsersController(UserService userService)
     {
         _userService = userService;
     }
 
-    /// <summary>
-    /// Lấy thông tin hồ sơ của user đang đăng nhập hiện tại
-    /// GET: /api/users/me
-    /// </summary>
-    [HttpGet("me")]
-    public async Task<IActionResult> GetMyProfile()
+    [HttpGet]
+    public async Task<IActionResult> GetAllUsers()
     {
-        // 1. Trích xuất UserId từ JWT Token (được lưu trong ClaimTypes.NameIdentifier khi tạo token)
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
-        }
-
-        // 2. Dùng var và async/await gọi xuống Service
-        var profile = await _userService.GetUserProfileAsync(userId);
-
-        if (profile == null)
-        {
-            return NotFound(new { message = "Không tìm thấy hồ sơ người dùng." });
-        }
-
-        return Ok(profile);
+        var users = await _userService.GetAllUsersAsync();
+        return Ok(users);
     }
 
-    /// <summary>
-    /// Cập nhật thông tin hồ sơ của user đang đăng nhập hiện tại
-    /// PUT: /api/users/me
-    /// </summary>
-    [HttpPut("me")]
-    public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateProfileRequest request)
+    // API này vẫn cần ID trên URL vì ai cũng có thể vào xem Profile của người khác (như Facebook)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetProfile(int id)
     {
-        // 1. Validate data đầu vào
-        if (!ModelState.IsValid)
+        var user = await _userService.GetProfileAsync(id);
+        
+        if (user == null)
         {
-            return BadRequest(ModelState);
+            return NotFound(new { Message = $"Không tìm thấy người dùng với ID: {id}" });
         }
 
-        // 2. Trích xuất UserId từ JWT Token
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        return Ok(user);
+    }
+
+    // ĐÃ FIX LỖI IDOR: Xóa {id} khỏi URL. Route giờ chỉ còn /api/users/profile
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDTO request)
+    {
+        // Tự động "móc" ID của người dùng từ chính Token họ gửi lên
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
         {
-            return Unauthorized(new { message = "Không thể xác thực danh tính người dùng." });
+            // Trả về 401 nếu Token có vấn đề hoặc bị giả mạo mất Claim ID
+            return Unauthorized(new { Message = "Token không hợp lệ hoặc không xác định được danh tính." });
         }
 
-        // 3. Đẩy logic cập nhật xuống Service
-        var result = await _userService.UpdateUserProfileAsync(userId, request);
-
-        // 4. Xử lý kết quả trả về
-        if (!result.Success)
+        // Truyền chính xác ID của người đang đăng nhập xuống Service
+        var isSuccess = await _userService.UpdateProfileAsync(userId, request);
+        
+        if (!isSuccess)
         {
-            return BadRequest(new { message = result.Message });
+            return BadRequest(new { Message = "Cập nhật hồ sơ thất bại." });
         }
 
-        return Ok(result);
+        return Ok(new { Message = "Cập nhật hồ sơ thành công." });
     }
 }

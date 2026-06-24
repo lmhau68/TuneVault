@@ -1,7 +1,7 @@
 using System.Data;
 using Dapper;
-using TuneVault.Application.Interfaces;
 using TuneVault.Domain.Entities;
+using TuneVault.Application.Interfaces;
 
 namespace TuneVault.Infrastructure.Repositories;
 
@@ -9,88 +9,108 @@ public class UserRepository : IUserRepository
 {
     private readonly IDbConnectionFactory _connectionFactory;
 
-    // Tiêm IDbConnectionFactory thông qua Dependency Injection
+    // Sử dụng Dependency Injection
     public UserRepository(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<User?> GetUserByUsernameAsync(string username)
+    public async Task<User?> GetByIdAsync(int id)
     {
-        const string sql = @"
-            SELECT Id, Username, PasswordHash, Email, CreatedAt 
-            FROM Users 
-            WHERE Username = @Username";
-
-        // Dùng 'using' để đảm bảo connection tự động đóng (Dispose) sau khi thực thi xong
-        using var connection = _connectionFactory.CreateConnection();
-        
-        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Username = username });
-    }
-
-    public async Task<User?> GetUserByIdAsync(int id)
-    {
-        // Sử dụng LEFT JOIN để lấy User kèm theo UserProfile (nếu có)
+        // Viết câu lệnh SQL kết hợp (JOIN) Users và UserProfiles
+        // Dùng alias 'ProfileId' để Dapper biết điểm cắt (splitOn) giữa 2 bảng
         const string sql = @"
             SELECT 
-                u.Id, u.Username, u.PasswordHash, u.Email, u.CreatedAt,
-                p.Id, p.UserId, p.DisplayName, p.AvatarUrl, p.Bio, p.UpdatedAt
+                u.Id, u.Email, u.PasswordHash, u.DisplayName, u.CreatedAt, u.UpdatedAt,
+                p.Id AS ProfileId, p.UserId, p.FullName, p.Bio, p.AvatarUrl, p.CreatedAt, p.UpdatedAt
             FROM Users u
             LEFT JOIN UserProfiles p ON u.Id = p.UserId
             WHERE u.Id = @Id";
 
         using var connection = _connectionFactory.CreateConnection();
-
-        // Kỹ thuật Multi-Mapping của Dapper: Map 2 bảng vào 1 object User
-        var result = await connection.QueryAsync<User, UserProfile, User>(
+        
+        // Multi-mapping: Ánh xạ dòng SQL thành 2 đối tượng User và UserProfile
+        var users = await connection.QueryAsync<User, UserProfile, User>(
             sql,
             (user, profile) =>
             {
-                user.Profile = profile; // Gắn profile vào thuộc tính navigation của User
+                user.Profile = profile; // Gắn profile vào user
                 return user;
             },
             new { Id = id },
-            splitOn: "Id" // Dapper sẽ tự tách dữ liệu Profile bắt đầu từ cột 'Id' thứ 2
+            splitOn: "ProfileId"
         );
 
-        return result.FirstOrDefault();
+        return users.FirstOrDefault();
     }
 
-    public async Task<bool> CreateUserAsync(User user)
+    public async Task<User?> GetByEmailAsync(string email)
     {
         const string sql = @"
-            INSERT INTO Users (Username, PasswordHash, Email, CreatedAt) 
-            VALUES (@Username, @PasswordHash, @Email, @CreatedAt)";
+            SELECT Id, Email, PasswordHash, DisplayName, CreatedAt, UpdatedAt 
+            FROM Users 
+            WHERE Email = @Email";
 
         using var connection = _connectionFactory.CreateConnection();
-        
-        // ExecuteAsync trả về số dòng bị ảnh hưởng
-        var rowsAffected = await connection.ExecuteAsync(sql, user);
-        return rowsAffected > 0;
+        return await connection.QuerySingleOrDefaultAsync<User>(sql, new { Email = email });
     }
 
-    public async Task<bool> UpdateUserProfileAsync(UserProfile profile)
+    public async Task<int> CreateAsync(User user)
     {
-        // Logic UPSERT: Cập nhật nếu đã tồn tại, Tạo mới nếu chưa có
+        // Dùng OUTPUT INSERTED.Id để lấy Id vừa được tự động sinh ra
+        const string sql = @"
+            INSERT INTO Users (Email, PasswordHash, DisplayName, CreatedAt)
+            OUTPUT INSERTED.Id
+            VALUES (@Email, @PasswordHash, @DisplayName, GETDATE())";
+
+        using var connection = _connectionFactory.CreateConnection();
+        var newUserId = await connection.ExecuteScalarAsync<int>(sql, user);
+        
+        return newUserId;
+    }
+
+    public async Task<bool> UpdateProfileAsync(int userId, UserProfile profile)
+    {
+        // Xử lý logic Upsert (Update nếu đã có, Insert nếu chưa có) 
+        // dựa đúng vào cấu trúc 2 bảng của Database
         const string sql = @"
             IF EXISTS (SELECT 1 FROM UserProfiles WHERE UserId = @UserId)
             BEGIN
-                UPDATE UserProfiles 
-                SET DisplayName = @DisplayName, 
-                    AvatarUrl = @AvatarUrl, 
+                UPDATE UserProfiles
+                SET FullName = @FullName, 
                     Bio = @Bio, 
-                    UpdatedAt = @UpdatedAt
+                    AvatarUrl = @AvatarUrl, 
+                    UpdatedAt = GETDATE()
                 WHERE UserId = @UserId
             END
             ELSE
             BEGIN
-                INSERT INTO UserProfiles (UserId, DisplayName, AvatarUrl, Bio, UpdatedAt)
-                VALUES (@UserId, @DisplayName, @AvatarUrl, @Bio, @UpdatedAt)
+                INSERT INTO UserProfiles (UserId, FullName, Bio, AvatarUrl, CreatedAt)
+                VALUES (@UserId, @FullName, @Bio, @AvatarUrl, GETDATE())
             END";
 
+        var parameters = new 
+        { 
+            UserId = userId, 
+            FullName = profile.FullName, 
+            Bio = profile.Bio, 
+            AvatarUrl = profile.AvatarUrl 
+        };
+
         using var connection = _connectionFactory.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, parameters);
         
-        var rowsAffected = await connection.ExecuteAsync(sql, profile);
         return rowsAffected > 0;
+    }
+
+    public async Task<IEnumerable<User>> GetAllUsersAsync()
+    {
+        const string sql = @"
+            SELECT Id, Email, DisplayName, CreatedAt, UpdatedAt 
+            FROM Users 
+            ORDER BY CreatedAt DESC";
+
+        using var connection = _connectionFactory.CreateConnection();
+        return await connection.QueryAsync<User>(sql);
     }
 }
