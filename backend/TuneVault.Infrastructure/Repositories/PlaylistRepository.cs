@@ -1,3 +1,4 @@
+using Dapper;
 using TuneVault.Application.Interfaces;
 using TuneVault.Domain.Entities;
 
@@ -5,23 +6,95 @@ namespace TuneVault.Infrastructure.Repositories;
 
 public class PlaylistRepository : IPlaylistRepository
 {
-    public Task<int> CreateAsync(Playlist playlist)
+    private readonly IDbConnectionFactory _connectionFactory;
+
+    public PlaylistRepository(IDbConnectionFactory connectionFactory)
     {
-        throw new NotImplementedException();
+        _connectionFactory = connectionFactory;
     }
 
-    public Task<Playlist?> GetByIdAsync(int id)
+    public async Task<int> CreateAsync(Playlist playlist)
     {
-        throw new NotImplementedException();
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            INSERT INTO Playlists
+            (
+                UserId,
+                Name,
+                Description,
+                CoverImagePath,
+                IsPublic,
+                CreatedAt,
+                UpdatedAt
+            )
+            VALUES
+            (
+                @UserId,
+                @Name,
+                @Description,
+                @CoverImagePath,
+                @IsPublic,
+                @CreatedAt,
+                @UpdatedAt
+            );
+
+            SELECT CAST(SCOPE_IDENTITY() as int);";
+
+        return await connection.ExecuteScalarAsync<int>(sql, playlist);
     }
 
-    public Task AddTrackAsync(PlaylistTrack track)
+    public async Task<Playlist?> GetByIdAsync(int id)
     {
-        throw new NotImplementedException();
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            SELECT *
+            FROM Playlists
+            WHERE Id = @Id";
+
+        return await connection.QueryFirstOrDefaultAsync<Playlist>(
+            sql,
+            new { Id = id }
+        );
     }
 
-    public Task RemoveTrackAsync(int playlistId, int mediaItemId)
+    public async Task AddTrackAsync(PlaylistTrack track)
     {
-        throw new NotImplementedException();
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            INSERT INTO PlaylistTracks
+            (
+                PlaylistId,
+                MediaItemId,
+                Position,
+                AddedAt
+            )
+            VALUES
+            (
+                @PlaylistId,
+                @MediaItemId,
+                @Position,
+                @AddedAt
+            )";
+
+        await connection.ExecuteAsync(sql, track);
+    }
+
+    public async Task RemoveTrackAsync(int playlistId, int mediaItemId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+
+        var sql = @"
+            DELETE FROM PlaylistTracks
+            WHERE PlaylistId = @PlaylistId
+            AND MediaItemId = @MediaItemId";
+
+        await connection.ExecuteAsync(sql, new
+        {
+            PlaylistId = playlistId,
+            MediaItemId = mediaItemId
+        });
     }
 }
