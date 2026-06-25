@@ -16,3 +16,4 @@ public interface IHistoryRepository
     // Lấy top thể loại nghe gần đây (dùng cho AI recommendation)
     Task<List<string>> GetRecentGenresAsync(int userId, int limit = 5);
 }
+

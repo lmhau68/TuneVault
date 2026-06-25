@@ -79,7 +79,8 @@ public class MediaService
 
             var newId = await _mediaRepository.CreateAsync(media);
             media.Id = newId;
-            
+            media.CreatedAt = DateTime.Now;
+
             // --- DÙNG TRY-CATCH BỌC LẠI ĐỂ BẢO VỆ LUỒNG CHÍNH ---
             try 
             {
@@ -96,16 +97,7 @@ public class MediaService
             }
 
             // 3. Trả về Response
-            return new MediaResponse
-            {
-                Id = media.Id,
-                Title = media.Title,
-                FilePath = media.FilePath,
-                OwnerUserId = media.OwnerUserId,
-                CreatedAt = DateTime.Now,
-                Artist = media.Artist,
-                Genre = media.Genre
-            };
+            return MapToResponse(media);
         }
 
         public async Task<IEnumerable<MediaResponse>> GetAllMediaAsync()
@@ -138,7 +130,13 @@ public class MediaService
                 OwnerUserId = media.OwnerUserId,
                 CreatedAt = media.CreatedAt,
                 Artist = media.Artist,
-                Genre = media.Genre
+                Genre = media.Genre,
+                Album = media.Album,
+                Description = media.Description,
+                MediaType = media.MediaType,
+                ThumbnailPath = media.ThumbnailPath,
+                DurationInSeconds = media.DurationInSeconds,
+                FileSizeInBytes = media.FileSizeInBytes
             };
         }
 }

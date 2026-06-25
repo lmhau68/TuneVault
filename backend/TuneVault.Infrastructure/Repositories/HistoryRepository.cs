@@ -89,7 +89,6 @@ public class HistoryRepository : IHistoryRepository
     public async Task<List<string>> GetRecentGenresAsync(int userId, int limit = 5)
     {
         using var connection = _connectionFactory.CreateConnection();
-
         var sql = @"
             SELECT TOP (@Limit) m.Genre
             FROM PlayHistories ph
@@ -102,3 +101,4 @@ public class HistoryRepository : IHistoryRepository
         return genres.ToList();
     }
 }
+

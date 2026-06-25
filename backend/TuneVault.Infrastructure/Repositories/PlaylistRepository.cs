@@ -112,4 +112,19 @@ public class PlaylistRepository : IPlaylistRepository
 
         await connection.ExecuteAsync(sql, new { PlaylistId = playlistId });
     }
+    public async Task<List<Playlist>> SearchPublicPlaylistsAsync(string keyword)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        
+        // Chỉ tìm playlist CÔNG KHAI (IsPublic = 1)
+        var sql = @"
+            SELECT * FROM Playlists 
+            WHERE IsPublic = 1 
+            AND (Name LIKE @Keyword OR Description LIKE @Keyword)
+            ORDER BY CreatedAt DESC";
+
+        var result = await connection.QueryAsync<Playlist>(sql, new { Keyword = $"%{keyword}%" });
+        
+        return result.ToList();
+    }
 }

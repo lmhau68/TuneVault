@@ -98,7 +98,6 @@ public class FavoriteRepository : IFavoriteRepository
     public async Task<List<string>> GetFavoriteArtistsAsync(int userId, int limit = 5)
     {
         using var connection = _connectionFactory.CreateConnection();
-
         var sql = @"
             SELECT TOP (@Limit) m.Artist
             FROM Favorites f
@@ -111,3 +110,4 @@ public class FavoriteRepository : IFavoriteRepository
         return artists.ToList();
     }
 }
+

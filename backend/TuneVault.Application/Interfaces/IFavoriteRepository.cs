@@ -16,3 +16,4 @@ public interface IFavoriteRepository
     // Lấy danh sách ca sĩ user yêu thích gần đây nhất (dùng cho AI recommendation)
     Task<List<string>> GetFavoriteArtistsAsync(int userId, int limit = 5);
 }
+

@@ -105,7 +105,25 @@ public class PlaylistService
         await _playlistRepository.DeleteAsync(playlistId);
         return (true, "Xóa playlist thành công.");
     }
+    public async Task<List<PlaylistResponse>> SearchPlaylistsAsync(string keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            return new List<PlaylistResponse>();
+        }
 
+        var playlists = await _playlistRepository.SearchPublicPlaylistsAsync(keyword);
+        var result = new List<PlaylistResponse>();
+
+        // Lặp qua từng playlist để lấy thêm danh sách bài hát bên trong nó
+        foreach (var playlist in playlists)
+        {
+            var tracks = await _playlistRepository.GetTracksByPlaylistIdAsync(playlist.Id);
+            result.Add(MapToResponse(playlist, tracks)); 
+        }
+
+        return result;
+    }
     // -----------------------------------------------
     // Private helper
     // -----------------------------------------------

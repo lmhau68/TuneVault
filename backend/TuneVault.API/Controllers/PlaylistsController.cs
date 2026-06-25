@@ -102,4 +102,12 @@ public class PlaylistsController : ControllerBase
 
         return Ok(new { Message = message });
     }
+    // GET /api/playlists/search?keyword=lofi
+    [HttpGet("search")]
+    [AllowAnonymous] 
+    public async Task<IActionResult> Search([FromQuery] string keyword)
+    {
+        var result = await _playlistService.SearchPlaylistsAsync(keyword);
+        return Ok(result);
+    }
 }

@@ -28,7 +28,7 @@ x86/
 # =========================
 appsettings.Development.json
 appsettings.Local.json
-
+appsettings.json
 # =========================
 # React / Node
 # =========================
