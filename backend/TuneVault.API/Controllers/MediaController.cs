@@ -89,7 +89,20 @@ public class MediaController : ControllerBase
             var result = await _mediaService.SearchAsync(keyword);
             return Ok(result);
         }
+        // GET /api/media/my/search
+        [HttpGet("my/search")]
+        public async Task<IActionResult> SearchMyMedia([FromQuery] string keyword)
+        {
+            // Bóc ID người dùng từ Token
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int currentUserId))
+            {
+                return Unauthorized(new { Message = "Token không hợp lệ." });
+            }
 
+            var result = await _mediaService.SearchMyMediaAsync(keyword, currentUserId);
+            return Ok(result);
+        }
         // API quan trọng để stream nhạc/video
 
         [AllowAnonymous]

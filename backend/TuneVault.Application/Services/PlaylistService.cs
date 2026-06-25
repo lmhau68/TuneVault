@@ -105,24 +105,20 @@ public class PlaylistService
         await _playlistRepository.DeleteAsync(playlistId);
         return (true, "Xóa playlist thành công.");
     }
-    public async Task<List<PlaylistResponse>> SearchPlaylistsAsync(string keyword)
+    public async Task<IEnumerable<PlaylistResponse>> SearchPlaylistsAsync(string keyword, int userId)
     {
-        if (string.IsNullOrWhiteSpace(keyword))
+        // 1. Gọi Repo truyền cả từ khóa lẫn ID người dùng vào
+        var playlists = await _playlistRepository.SearchPlaylistsAsync(keyword, userId);
+        
+        // 2. Map từ Entity sang DTO để trả về cho Frontend
+        return playlists.Select(p => new PlaylistResponse 
         {
-            return new List<PlaylistResponse>();
-        }
-
-        var playlists = await _playlistRepository.SearchPublicPlaylistsAsync(keyword);
-        var result = new List<PlaylistResponse>();
-
-        // Lặp qua từng playlist để lấy thêm danh sách bài hát bên trong nó
-        foreach (var playlist in playlists)
-        {
-            var tracks = await _playlistRepository.GetTracksByPlaylistIdAsync(playlist.Id);
-            result.Add(MapToResponse(playlist, tracks)); 
-        }
-
-        return result;
+            Id = p.Id,
+            Name = p.Name,
+            Description = p.Description,
+            IsPublic = p.IsPublic,
+            UserId = p.UserId
+        }).ToList();
     }
     // -----------------------------------------------
     // Private helper

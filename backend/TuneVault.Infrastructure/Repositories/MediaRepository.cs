@@ -48,7 +48,24 @@ public class MediaRepository : IMediaRepository
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<MediaItem>(query, new { Keyword = $"%{keyword}%" });
     }
+    public async Task<IEnumerable<MediaItem>> SearchMyMediaAsync(string keyword, int currentUserId)
+    {
+        using var connection = _connectionFactory.CreateConnection();
+        
+        var sql = @"
+            SELECT * FROM MediaItems 
+            WHERE OwnerUserId = @CurrentUserId
+            AND (Title COLLATE SQL_Latin1_General_CP1_CI_AI LIKE @Keyword 
+                OR Artist COLLATE SQL_Latin1_General_CP1_CI_AI LIKE @Keyword)
+            ORDER BY CreatedAt DESC";
 
+        var parameters = new { 
+            Keyword = $"%{keyword}%", 
+            CurrentUserId = currentUserId 
+        };
+
+        return await connection.QueryAsync<MediaItem>(sql, parameters);
+    }
 
     // AI RECOMMENDATION
     public async Task<List<MediaItem>> GetItemsByTitlesAsync(List<string> titles)

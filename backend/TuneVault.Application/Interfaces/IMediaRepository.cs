@@ -9,8 +9,7 @@ public interface IMediaRepository
     Task<IEnumerable<MediaItem>> GetAllAsync();
     Task<MediaItem?> GetByIdAsync(int id);
     Task<IEnumerable<MediaItem>> SearchAsync(string keyword);
-
-    // Các hàm dành cho AI
+    Task<IEnumerable<MediaItem>> SearchMyMediaAsync(string keyword, int currentUserId);
     Task<List<MediaItem>> GetItemsByTitlesAsync(List<string> titles);
     Task<List<string>> GetRandomAvailableTitlesAsync(int limit = 50);
 

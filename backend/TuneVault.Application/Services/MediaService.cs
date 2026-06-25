@@ -108,7 +108,11 @@ public class MediaService
             var mediaItems = await _mediaRepository.SearchAsync(keyword);
             return mediaItems.Select(m => MapToResponse(m));
         }
-
+        public async Task<IEnumerable<MediaResponse>> SearchMyMediaAsync(string keyword, int userId)
+        {
+            var mediaItems = await _mediaRepository.SearchMyMediaAsync(keyword, userId);
+            return mediaItems.Select(m => MapToResponse(m));
+        }
         // Hàm phụ trợ map từ Entity sang DTO
         private MediaResponse MapToResponse(MediaItem media)
         {
