@@ -13,5 +13,5 @@ public interface IPlaylistRepository
     Task RemoveTrackAsync(int playlistId, int mediaItemId);
     Task DeleteAsync(int playlistId);
     // Tìm kiếm playlist
-    Task<List<Playlist>> SearchPublicPlaylistsAsync(string keyword);
+    Task<List<Playlist>> SearchPlaylistsAsync(string keyword, int currentUserId);
 }
