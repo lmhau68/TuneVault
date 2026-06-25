@@ -24,23 +24,11 @@ public class MediaService
 
         public async Task<MediaResponse> UploadMediaAsync(UploadMediaRequest request, int userId)
         {
-            // 1. Logic lưu file local
-            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
-            if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
-
-            var fileName = $"{Guid.NewGuid()}_{request.File.FileName}";
-            var filePath = Path.Combine(uploadPath, fileName);
-
-
-            // 2. Logic lưu metadata vào DB
+            // 1. Phân tích đuôi file TRƯỚC để biết là Audio hay Video
             var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
             var allowedExtensions = new[]
             {
-                ".mp3",
-                ".wav",
-                ".mp4",
-                ".avi",
-                ".mov"
+                ".mp3", ".wav", ".mp4", ".avi", ".mov"
             };
 
             if (!allowedExtensions.Contains(extension))
@@ -48,32 +36,36 @@ public class MediaService
                 throw new ArgumentException("Only mp3, wav, mp4, avi, mov files are allowed.");
             }
 
+            string mediaType = (extension == ".mp4" || extension == ".avi" || extension == ".mov") 
+                                ? "Video" 
+                                : "Audio";
+
+            // 2. Tạo đường dẫn động theo loại Media ("audio" hoặc "video")
+            string subFolder = mediaType.ToLower(); 
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", subFolder);
+            
+            // Tự động tạo folder nếu chưa có
+            if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+
+            var fileName = $"{Guid.NewGuid()}_{request.File.FileName}";
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // 3. Copy file vào đúng thư mục (audio/ hoặc video/)
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await request.File.CopyToAsync(stream);
             }
 
-            string mediaType =
-                extension == ".mp4" ||
-                extension == ".avi" ||
-                extension == ".mov"
-                    ? "Video"
-                    : "Audio";
-
+            // 4. Lưu thông tin vào Database với FilePath đã được cập nhật chuẩn xác
             var media = new MediaItem
             {
                 Title = request.Title,
-
                 OwnerUserId = userId,
-
                 Artist = request.Artist,
                 Genre = request.Genre,
                 Album = request.Album,
-
                 MediaType = mediaType,
-
-                FilePath = $"/uploads/{fileName}",
-
+                FilePath = $"/uploads/{subFolder}/{fileName}", // <-- Đường dẫn cực chuẩn để lưu DB
                 FileSizeInBytes = request.File.Length
             };
 
@@ -81,7 +73,7 @@ public class MediaService
             media.Id = newId;
             media.CreatedAt = DateTime.Now;
 
-            // --- DÙNG TRY-CATCH BỌC LẠI ĐỂ BẢO VỆ LUỒNG CHÍNH ---
+            // --- Bắn thông báo SignalR ---
             try 
             {
                 await _notificationHubService.SendNotificationToGroupAsync(
@@ -92,11 +84,9 @@ public class MediaService
             }
             catch (Exception ex)
             {
-                // Chỉ ghi log lỗi ra Console/File
                 Console.WriteLine($"[CẢNH BÁO] Lỗi bắn thông báo SignalR cho user {userId}: {ex.Message}");
             }
 
-            // 3. Trả về Response
             return MapToResponse(media);
         }
 

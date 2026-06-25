@@ -1,11 +1,11 @@
 using TuneVault.Application.DTOs.User;
 using TuneVault.Application.Interfaces;
+using TuneVault.Domain.Entities; // Thêm dòng này để gọi được UserProfile
 
 namespace TuneVault.Application.Services;
 
 public class UserService 
 {
-    // TODO: Sẽ Inject IUserRepository (chứa SQL Dapper) vào đây qua Constructor
     private readonly IUserRepository _userRepository;
 
     public UserService(IUserRepository userRepository)
@@ -13,40 +13,55 @@ public class UserService
         _userRepository = userRepository;
     }
 
-    public async Task<UserResponseDTO> GetProfileAsync(int id)
+    public async Task<UserResponseDTO?> GetProfileAsync(int id)
     {
-        // TODO: Gọi IUserRepository.GetByIdAsync(id)
-        // TODO: Mapping Entity sang DTO
+        // 1. Gọi Repo chọc xuống Database lấy dữ liệu THẬT
+        var user = await _userRepository.GetByIdAsync(id);
         
-        // Code mô phỏng (Mock) để Controller có thể test trước
-        return await Task.FromResult(new UserResponseDTO 
+        // 2. Nếu không có ai thì trả về null cho Controller xử lý báo lỗi
+        if (user == null) return null;
+
+        // 3. Chuyển đổi (Map) từ Thực thể (Entity) sang định dạng trả về (DTO)
+        return new UserResponseDTO 
         { 
-            Id = id, 
-            Username = "audiophile_99", 
-            Email = "user@tunevault.com",
-            Bio = "Love listening to lo-fi beats."
-        });
+            Id = user.Id, 
+            Username = user.DisplayName, // Lấy DisplayName làm Username
+            FullName = user.Profile?.FullName,
+            Email = user.Email,
+            Bio = user.Profile?.Bio,     // Dùng dấu ? vì có thể user chưa có Profile
+            AvatarUrl = user.Profile?.AvatarUrl
+        };
     }
 
     public async Task<IEnumerable<UserResponseDTO>> GetAllUsersAsync()
     {
-        // TODO: Gọi IUserRepository.GetAllAsync()
+        // 1. Lấy toàn bộ danh sách user từ Database
+        var users = await _userRepository.GetAllUsersAsync();
         
-        var mockList = new List<UserResponseDTO>
-        {
-            new UserResponseDTO { Id = 1, Username = "admin" },
-            new UserResponseDTO { Id = 2, Username = "member" }
-        };
-        
-        return await Task.FromResult(mockList);
+        // 2. Map sang list DTO
+        return users.Select(u => new UserResponseDTO 
+        { 
+            Id = u.Id, 
+            Username = u.DisplayName,
+            Email = u.Email
+        }).ToList();
     }
 
     public async Task<bool> UpdateProfileAsync(int id, UpdateProfileRequestDTO request)
     {
-        // TODO: Kiểm tra user có tồn tại không bằng IUserRepository
-        // TODO: Validate logic nghiệp vụ (nếu có)
-        // TODO: Gọi hàm Update của Dapper
-        
-        return await Task.FromResult(true);
+        // 1. Kiểm tra xem user có tồn tại không trước khi update
+        var existingUser = await _userRepository.GetByIdAsync(id);
+        if (existingUser == null) return false;
+
+        // 2. Gói dữ liệu từ Request vào Entity UserProfile
+        var profile = new UserProfile
+        {
+            FullName = request.FullName, 
+            Bio = request.Bio,
+            AvatarUrl = request.AvatarUrl
+        };
+
+        // 3. Gọi hàm Upsert (Cập nhật hoặc Thêm mới) của Dapper
+        return await _userRepository.UpdateProfileAsync(id, profile);
     }
 }
