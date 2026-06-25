@@ -81,7 +81,8 @@ public class MediaController : ControllerBase
             if (result == null) return NotFound("Media not found");
             return Ok(result);
         }
-
+        
+        [AllowAnonymous]
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string keyword)
         {
@@ -90,6 +91,7 @@ public class MediaController : ControllerBase
         }
 
         // API quan trọng để stream nhạc/video
+
         [AllowAnonymous]
         [HttpGet("{id}/stream")]
         public async Task<IActionResult> Stream(int id)
@@ -98,7 +100,7 @@ public class MediaController : ControllerBase
             if (media == null) return NotFound("Media not found");
 
             // Xử lý đường dẫn file
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", media.FilePath.TrimStart('/'));
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", media.FilePath!.TrimStart('/'));
             if (!System.IO.File.Exists(filePath)) return NotFound("File does not exist on server");
 
             var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);

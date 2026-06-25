@@ -48,11 +48,14 @@ public class Program
         builder.Services.AddScoped<NotificationService>();
         builder.Services.AddScoped<IMediaRepository, MediaRepository>();
         builder.Services.AddScoped<MediaService>();
-        
-        // Của riêng AI
         builder.Services.AddScoped<IHistoryRepository, HistoryRepository>();
+        builder.Services.AddScoped<HistoryService>();
         builder.Services.AddScoped<IFavoriteRepository, FavoriteRepository>();
-        
+        builder.Services.AddScoped<FavoriteService>();
+        builder.Services.AddScoped<IFollowRepository, FollowRepository>();
+        builder.Services.AddScoped<FollowService>();
+        builder.Services.AddScoped<IPlaylistRepository, PlaylistRepository>();
+        builder.Services.AddScoped<PlaylistService>();
         // SignalR
         builder.Services.AddSignalR();
         builder.Services.AddScoped<INotificationHubService, NotificationHubService>();
@@ -129,10 +132,9 @@ public class Program
             });
         var app = builder.Build();
 
+
         // Kích hoạt CORS (Bắt buộc phải đứng TRƯỚC Authentication và Authorization)
         app.UseCors("AllowFrontend");
-
-        
 
         if (app.Environment.IsDevelopment())
         {
@@ -141,6 +143,7 @@ public class Program
         }
 
         app.UseHttpsRedirection();
+
         // Mở thư mục wwwroot để cho phép tải ảnh bìa, nhạc, video trực tiếp qua link static
         app.UseStaticFiles();
 

@@ -4,13 +4,16 @@ namespace TuneVault.Application.Interfaces;
 
 public interface IMediaRepository
 {
-    // Các hàm cơ bản của ông B
+    // Các hàm cơ bản
     Task<int> CreateAsync(MediaItem media);
     Task<IEnumerable<MediaItem>> GetAllAsync();
     Task<MediaItem?> GetByIdAsync(int id);
     Task<IEnumerable<MediaItem>> SearchAsync(string keyword);
 
-    // Các hàm dành cho AI của Tech Lead
+    // Các hàm dành cho AI
     Task<List<MediaItem>> GetItemsByTitlesAsync(List<string> titles);
     Task<List<string>> GetRandomAvailableTitlesAsync(int limit = 50);
+
+    // Check media tồn tại (dùng cho Favorite, History)
+    Task<bool> ExistsAsync(int mediaItemId);
 }
