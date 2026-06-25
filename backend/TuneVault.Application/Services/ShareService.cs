@@ -5,7 +5,6 @@ namespace TuneVault.Application.Services;
 
 public class ShareService
 {
-    // TODO: Xu ly logic nghiep vu cho module Share
     private readonly IShareRepository _shareRepo;
     private readonly INotificationRepository _notificationRepo;
     private readonly INotificationHubService _notificationHubService;
@@ -22,36 +21,35 @@ public class ShareService
 
     public async Task<IEnumerable<SharedWithMeDto>> GetSharedWithMeAsync(int currentUserId)
     {
-        // Truyền currentUserId xuống làm ReceiverId
         return await _shareRepo.GetSharedWithMeAsync(currentUserId);
     }
 
     public async Task<IEnumerable<SharedByMeDto>> GetSharedByMeAsync(int currentUserId)
     {
-        // Truyền currentUserId xuống làm SenderId
         return await _shareRepo.GetSharedByMeAsync(currentUserId);
     }
 
     public async Task<ShareResponse> ShareMediaAsync(int senderId,string senderName,CreateShareRequest request)
     {
-        //lưu lượt chia sẻ
         var shareEntity = new MediaShare
         {
             SenderUserId = senderId,
             ReceiverUserId = request.ReceiverUserId,
-            MediaItemId = request.MediaItemId,
-            PlaylistId=request.PlaylistId,
+            // KHÔNG ÉP VỀ 0 NỮA, null thì cứ để nó là null truyền xuống DB
+            MediaItemId = request.MediaItemId, 
+            PlaylistId = request.PlaylistId, 
             Message = request.Message,
             SharedAt = DateTime.UtcNow
         };
 
         int newId = await _shareRepo.CreateAsync(shareEntity);
         
-        //lưu lại thông báo
         string title = "Bạn có media mới được chia sẻ";
-        string message = $"{senderName} đã chia sẽ một media cho bạn";
+        string message = $"{senderName} đã chia sẻ một {(request.MediaItemId.HasValue ? "bài hát/video" : "playlist")} cho bạn";
 
-        int relatedEntityId = request.MediaItemId > 0 ? request.MediaItemId : request.PlaylistId;
+        // Lấy ID của cái nào đang có dữ liệu để nhét vào thông báo
+        int relatedEntityId = request.MediaItemId ?? request.PlaylistId ?? 0;
+        
         await _notificationRepo.CreateNotificationAsync(
             userId: request.ReceiverUserId,
             title: title,
@@ -60,7 +58,6 @@ public class ShareService
             relatedId: relatedEntityId
         );
         
-        //Gửi bằng signalIr
         await _notificationHubService.SendNotificationToUserAsync(
             userId: request.ReceiverUserId,
             title: title,
@@ -71,8 +68,9 @@ public class ShareService
             newId,
             senderId,
             request.ReceiverUserId,
-            request.MediaItemId,
-            request.PlaylistId,
+            // Chỗ này đành phải ép về 0 vì record trả về của ShareResponse đang bắt buộc dùng int. Không ảnh hưởng tới DB.
+            request.MediaItemId ?? 0, 
+            request.PlaylistId ?? 0, 
             request.Message,
             shareEntity.SharedAt);
     }
