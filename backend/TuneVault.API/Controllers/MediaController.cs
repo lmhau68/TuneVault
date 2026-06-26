@@ -35,7 +35,10 @@ public class MediaController : ControllerBase
             {
                 return BadRequest("File is required.");
             }
-
+            if (string.IsNullOrWhiteSpace(request.Title))
+            {
+                return BadRequest("Tile is required");
+            }
             // Giới hạn 50MB
             const long maxSize = 50 * 1024 * 1024;
 
