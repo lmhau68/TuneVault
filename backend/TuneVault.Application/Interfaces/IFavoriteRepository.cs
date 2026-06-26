@@ -1,4 +1,4 @@
-using TuneVault.Application.DTOs;
+using TuneVault.Application.DTOs.Favorite;
 
 namespace TuneVault.Application.Interfaces;
 

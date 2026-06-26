@@ -1,5 +1,5 @@
 using Dapper;
-using TuneVault.Application.DTOs;
+using TuneVault.Application.DTOs.Favorite;
 using TuneVault.Application.Interfaces;
 
 namespace TuneVault.Infrastructure.Repositories;

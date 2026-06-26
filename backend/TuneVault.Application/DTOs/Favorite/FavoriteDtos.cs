@@ -1,4 +1,4 @@
-﻿namespace TuneVault.Application.DTOs;
+﻿namespace TuneVault.Application.DTOs.Favorite;
 
 public class FavoriteMediaResponseDto
 {
