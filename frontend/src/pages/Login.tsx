@@ -5,10 +5,19 @@ export default function Login() {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [user, setUser] = useState({ email: '', password: '', fullName: '' });
   const [isLogging, setIsLogging] = useState(false);
+  
+  // State quản lý hiển thị lỗi, thành công và ẩn/hiện mật khẩu
+  const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLogging) return;
+    
+    // Reset thông báo mỗi lần submit
+    setErrorMsg('');
+    setSuccessMsg('');
     
     try {
       setIsLogging(true);
@@ -19,19 +28,17 @@ export default function Login() {
             password: user.password 
         });
         
-        console.log("Dữ liệu từ Backend:", res); // Thêm log để bạn dễ debug nếu cần
+        console.log("Dữ liệu từ Backend:", res);
         
-        // ĐÃ SỬA: Nới lỏng điều kiện (chỉ cần có token hoặc isSuccess = true)
         if (res && (res.token || res.isSuccess)) {
           if (res.token) {
             localStorage.setItem('tune_vault_token', res.token);
           }
-          alert(res.message || 'Đăng nhập hệ thống thành công!');
-          
-          // ĐÃ SỬA: Dùng href để ép trình duyệt load lại thẳng vào trang chủ
+          // Đăng nhập đúng thì chuyển hướng thẳng vào luôn không cần thông báo alert
           window.location.href = '/';
         } else {
-          alert(res.message || 'Tài khoản hoặc mật khẩu không chính xác!');
+          // Báo lỗi bằng state thay vì alert
+          setErrorMsg(res.message || 'Tài khoản hoặc mật khẩu không chính xác!');
         }
       } else {
         // Ánh xạ với RegisterRequestDTO
@@ -42,16 +49,18 @@ export default function Login() {
         });
 
         if (res.isSuccess) {
-            alert(res.message || 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
+            // Báo thành công bằng state
+            setSuccessMsg(res.message || 'Đăng ký tài khoản thành công! Vui lòng đăng nhập.');
             setIsLoginMode(true); 
             setUser({ email: '', password: '', fullName: '' });
         } else {
-            alert(res.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại!');
+            // Báo lỗi bằng state
+            setErrorMsg(res.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại!');
         }
       }
     } catch (err) {
       console.error("Lỗi đăng nhập/đăng ký:", err);
-      alert('Đã xảy ra lỗi hệ thống! Vui lòng kiểm tra lại kết nối API.');
+      setErrorMsg('Đã xảy ra lỗi hệ thống! Vui lòng kiểm tra lại kết nối API.');
     } finally {
       setIsLogging(false);
     }
@@ -71,6 +80,18 @@ export default function Login() {
               : 'Tạo một không gian âm nhạc cá nhân của riêng bạn'}
           </p>
         </div>
+
+        {/* Khu vực hiển thị thông báo thay thế cho Alert */}
+        {errorMsg && (
+          <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-[13px] font-bold p-3 rounded-lg text-center animate-fade-in">
+            {errorMsg}
+          </div>
+        )}
+        {successMsg && (
+          <div className="bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 text-[13px] font-bold p-3 rounded-lg text-center animate-fade-in">
+            {successMsg}
+          </div>
+        )}
 
         {!isLoginMode && (
           <div className="animate-fade-in">
@@ -100,14 +121,34 @@ export default function Login() {
 
         <div>
           <label className="text-xs text-zinc-400 font-bold block mb-1">Mật khẩu</label>
-          <input 
-            type="password" 
-            required
-            value={user.password}
-            onChange={e => setUser({...user, password: e.target.value})} 
-            placeholder="••••••••" 
-            className="w-full p-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500 transition" 
-          />
+          <div className="relative">
+            <input 
+              type={showPassword ? "text" : "password"} 
+              required
+              value={user.password}
+              onChange={e => setUser({...user, password: e.target.value})} 
+              placeholder="••••••••" 
+              className="w-full p-2.5 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white focus:outline-none focus:border-emerald-500 transition pr-10" 
+            />
+            <button 
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-emerald-500 transition cursor-pointer"
+              title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+            >
+              {showPassword ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4.5 h-4.5">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <button 
@@ -126,6 +167,8 @@ export default function Login() {
               onClick={() => {
                 setIsLoginMode(!isLoginMode);
                 setUser({ email: '', password: '', fullName: '' }); 
+                setErrorMsg('');
+                setSuccessMsg('');
               }} 
               className="text-emerald-500 font-bold hover:underline cursor-pointer"
             >

@@ -11,7 +11,7 @@ export default function Playlist() {
   const [activeTrackMenuId, setActiveTrackMenuId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const { handleSelectMedia, selectedPlaylist, likedSongs, savedPlaylists, toggleSavePlaylist, setSavedPlaylists } = useContext(PlayerContext) || {};
+  const { handleSelectMedia, selectedPlaylist, likedSongs, savedPlaylists, toggleSavePlaylist, setSavedPlaylists, toggleSongInPlaylist } = useContext(PlayerContext) || {};
 
   useEffect(() => {
     if (selectedPlaylist?.id === 'liked-playlist') {
@@ -57,13 +57,10 @@ export default function Playlist() {
     }
     
     try {
-      await mediaService.removeTrackFromPlaylist(selectedPlaylist.id, songId);
-      setTracks(prev => prev.filter(t => t.id !== songId));
-      // update savedPlaylists counts
-      if (setSavedPlaylists) {
-        setSavedPlaylists((prev: any[]) => prev.map(p => p.id === selectedPlaylist.id ? { ...p, tracksCount: Math.max(0, (p.tracksCount ?? 0) - 1) } : p));
+      if (toggleSongInPlaylist) {
+          await toggleSongInPlaylist(selectedPlaylist.id, songId);
       }
-      window.dispatchEvent(new Event('playlist_tracks_updated'));
+      setTracks(prev => prev.filter(t => t.id !== songId));
     } catch {
       alert("Xóa bài hát thất bại. Vui lòng kiểm tra lại kết nối backend.");
     }
@@ -138,7 +135,8 @@ export default function Playlist() {
         {isTrackLoading ? (
           <p className="text-center text-zinc-500 text-xs animate-pulse py-12 italic">Đang đồng bộ dữ liệu bài hát từ máy chủ...</p>
         ) : filteredTracks.length > 0 ? (
-          <div className="space-y-1.5 pb-8">
+
+          (<div className="space-y-1.5 pb-[200px]">
             <div className="grid grid-cols-12 px-2 md:px-4 py-2 text-[11px] font-black uppercase tracking-wider text-zinc-500 border-b border-zinc-900 mb-2">
               <div className="col-span-1 hidden sm:block">#</div>
               <div className="col-span-9 sm:col-span-8">Tiêu đề bài viết</div>
@@ -198,7 +196,7 @@ export default function Playlist() {
                       >
                         <button 
                           onClick={() => handleAddToQueue(song)}
-                          className="w-full text-left px-3 py-2 text-zinc-300 hover:text-white hover:bg-zinc-700 rounded-lg text-xs font-bold transition flex items-center gap-2"
+                          className="w-full text-left px-3 py-2 text-zinc-300 hover:text-white hover:bg-zinc-700 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer"
                         >
                           ➕ Thêm vào hàng đợi
                         </button>
@@ -207,7 +205,7 @@ export default function Playlist() {
                         
                         <button 
                           onClick={() => handleRemoveTrack(song.id)}
-                          className="w-full text-left px-3 py-2 text-red-400 hover:text-red-300 hover:bg-zinc-700 rounded-lg text-xs font-bold transition flex items-center gap-2"
+                          className="w-full text-left px-3 py-2 text-red-400 hover:text-red-300 hover:bg-zinc-700 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer"
                         >
                           ❌ Xóa khỏi playlist này
                         </button>
@@ -218,7 +216,7 @@ export default function Playlist() {
               );
             })}
           </div>
-        ) : tracks.length === 0 ? (
+        ) ): tracks.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-zinc-500 text-xs py-16 text-center bg-zinc-900/10 rounded-xl border border-dashed border-zinc-800/60 m-2 animate-fade-in">
             <span className="text-5xl mb-4 animate-bounce">🎵</span>
             <span className="font-black text-sm text-white mb-1">Hiện không có video/nhạc/podcast</span>

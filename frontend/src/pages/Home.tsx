@@ -16,7 +16,6 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState<'All' | 'Audio' | 'Video'>('All');
   
   const [activeShareId, setActiveShareId] = useState<number | null>(null);
-  const [isCopying, setIsCopying] = useState(false);
   const shareMenuRef = useRef<HTMLDivElement | null>(null);
 
   const { 
@@ -50,8 +49,64 @@ export default function Home() {
   };
 
   useEffect(() => {
-    mediaService.getPlaylists().then(data => setPlaylists(data || []));
-    mediaService.getSongs().then(data => setSongs(data || []));
+    // 1. LẤY PLAYLIST TỪ BACKEND (Xử lý đồng thời cả Public và Private để đảm bảo có dữ liệu hiển thị)
+    Promise.all([
+      mediaService.getPublicPlaylists().catch(() => []),
+      mediaService.getPlaylists ? mediaService.getPlaylists().catch(() => []) : Promise.resolve([])
+    ]).then(([publicRes, privateRes]) => {
+      // Hàm bóc tách array an toàn cho backend .NET / SSMS
+      const extractArray = (res: any) => {
+        if (Array.isArray(res)) return res;
+        if (res?.data && Array.isArray(res.data)) return res.data;
+        if (res?.Data && Array.isArray(res.Data)) return res.Data;
+        if (res?.items && Array.isArray(res.items)) return res.items;
+        if (res?.Items && Array.isArray(res.Items)) return res.Items;
+        return [];
+      };
+
+      const pubList = extractArray(publicRes);
+      const privList = extractArray(privateRes);
+      
+      // Gộp lại và loại bỏ trùng lặp theo ID
+      const combined = [...pubList, ...privList];
+      const uniquePlaylists = Array.from(new Map(combined.map(p => [p.id || p.Id, p])).values());
+
+      // Chuẩn hóa Mapping đảm bảo khớp 100% với PlaylistModel (xử lý case PascalCase của C#)
+      const mappedPlaylists = uniquePlaylists.map((item: any) => ({
+        ...item,
+        id: item.id ?? item.Id ?? item.PlaylistId,
+        userId: item.userId ?? item.UserId,
+        name: item.name ?? item.Name ?? "Playlist Không Tên",
+        description: item.description ?? item.Description ?? "Danh sách chọn lọc.",
+        isPublic: item.isPublic ?? item.IsPublic ?? true,
+        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+        tracksCount: item.tracksCount ?? item.TracksCount ?? 0
+      }));
+
+      setPlaylists(mappedPlaylists);
+    }).catch(e => console.error("Lỗi đồng bộ Playlist Nổi Bật:", e));
+
+    // 2. LẤY DANH SÁCH BÀI HÁT / VIDEO
+    mediaService.getSongs().then((res: any) => {
+      let sList = [];
+      if (Array.isArray(res)) sList = res;
+      else if (res?.data && Array.isArray(res.data)) sList = res.data;
+      else if (res?.Data && Array.isArray(res.Data)) sList = res.Data;
+      else if (res?.items && Array.isArray(res.items)) sList = res.items;
+      
+      const mappedSongs = sList.map((item: any) => ({
+        ...item,
+        id: item.id ?? item.Id ?? item.MediaId,
+        title: item.title ?? item.Title ?? "Unknown Title",
+        mediaType: item.mediaType ?? item.MediaType ?? 'Audio',
+        thumbnailPath: item.thumbnailPath ?? item.ThumbnailPath,
+        ownerUserId: item.ownerUserId ?? item.OwnerUserId,
+        genre: item.genre ?? item.Genre,
+        description: item.description ?? item.Description,
+        artist: item.artist ?? item.Artist
+      }));
+      setSongs(mappedSongs || []);
+    }).catch(e => console.error("Lỗi lấy danh sách bài hát:", e));
     
     // Gọi AI lần đầu khi vào trang
     fetchAiRecommendations();
@@ -84,6 +139,8 @@ export default function Home() {
         userList = response.users;
       } else if (response && Array.isArray(response.items)) {
         userList = response.items;
+      } else if (response && Array.isArray(response.Data)) {
+        userList = response.Data;
       }
 
       const filteredUsers = userList.filter((u: any) => {
@@ -164,7 +221,7 @@ export default function Home() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 flex items-center gap-2 cursor-pointer">
-              🎧 Hôm nay nghe gì?
+              🎧 Giai điệu dành cho bạn
             </h2>
           </div>
           
@@ -219,19 +276,6 @@ export default function Home() {
                         className="absolute bottom-full left-0 mb-2 w-56 bg-[#282828] border border-zinc-700 rounded-xl p-3 shadow-2xl z-50 animate-fade-in text-white cursor-default"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(`${window.location.origin}/api/Media/${song.id}/stream`);
-                            setIsCopying(true);
-                            setTimeout(() => setIsCopying(false), 2000);
-                          }}
-                          className="w-full text-left p-2 hover:bg-zinc-700 rounded-lg text-[11px] font-bold transition text-zinc-200 hover:text-white"
-                        >
-                          {isCopying ? '✅ Đã sao chép liên kết!' : '🔗 Sao chép liên kết'}
-                        </button>
-                        
-                        <div className="h-px bg-zinc-700 my-2"></div>
                         <div className="text-[10px] font-bold text-zinc-400 mb-1.5 px-1 uppercase tracking-wider">Gửi trực tiếp cho:</div>
                         
                         <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar">
@@ -280,34 +324,45 @@ export default function Home() {
         </div>
       )}
 
-      {/* KHUNG PLAYLIST NỔI BẬT */}
-      {activeFilter === 'All' && playlists.length > 0 && (
+      {/* KHUNG PLAYLIST NỔI BẬT (Đã kết nối Backend và Data Mapping chuẩn) */}
+      {activeFilter === 'All' && (
         <div className="space-y-3 mt-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-extrabold text-white hover:underline cursor-pointer">Playlist Nổi Bật</h2>
           </div>
           
-          <div className="flex gap-4 sm:gap-6 overflow-x-auto custom-scrollbar pb-4 snap-x">
-            {playlists.map(pl => (
-              <div 
-                key={pl.id} 
-                onClick={() => handleOpenPlaylist(pl)}
-                className="bg-[#181818] p-3 rounded-xl hover:bg-[#282828] transition-all duration-300 group cursor-pointer border border-zinc-900 shadow-lg hover:shadow-2xl flex flex-col shrink-0 w-32 sm:w-36 md:w-40 snap-start"
-              >
-                <div className="w-full aspect-square bg-gradient-to-br from-zinc-700 to-zinc-900 rounded-lg mb-3 shadow-md flex items-center justify-center relative overflow-hidden">
-                  <span className="text-3xl">🎶</span>
-                  <span className="absolute top-2 left-2 text-[10px] bg-black/60 text-emerald-400 px-2 py-0.5 rounded-full font-extrabold border border-emerald-500/20">PLAYLIST</span>
-                </div>
+          {playlists.length > 0 ? (
+            <div className="flex gap-4 sm:gap-6 overflow-x-auto custom-scrollbar pb-4 snap-x">
+              {playlists.map(pl => {
+                const plId = pl.id;
+                const plName = pl.name;
+                const plDesc = pl.description;
+                return (
+                  <div 
+                    key={plId} 
+                    onClick={() => handleOpenPlaylist(pl)}
+                    className="bg-[#181818] p-3 rounded-xl hover:bg-[#282828] transition-all duration-300 group cursor-pointer border border-zinc-900 shadow-lg hover:shadow-2xl flex flex-col shrink-0 w-32 sm:w-36 md:w-40 snap-start"
+                  >
+                    <div className="w-full aspect-square bg-gradient-to-br from-zinc-700 to-zinc-900 rounded-lg mb-3 shadow-md flex items-center justify-center relative overflow-hidden">
+                      <span className="text-3xl group-hover:scale-110 transition-transform duration-300">🎶</span>
+                      <span className="absolute top-2 left-2 text-[10px] bg-black/60 text-emerald-400 px-2 py-0.5 rounded-full font-extrabold border border-emerald-500/20">PLAYLIST</span>
+                    </div>
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-1 mb-1">
-                    <h3 className="font-bold text-[13px] text-white truncate">{pl.name}</h3>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-1 mb-1">
+                        <h3 className="font-bold text-[13px] text-white truncate">{plName}</h3>
+                      </div>
+                      <p className="text-zinc-400 text-[11px] truncate leading-relaxed">{plDesc}</p>
+                    </div>
                   </div>
-                  <p className="text-zinc-400 text-[11px] truncate leading-relaxed">{pl.description || "Danh sách chọn lọc."}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-4 text-center bg-zinc-900/40 rounded-xl border border-zinc-800 text-zinc-500 text-xs italic">
+               Hiện tại hệ thống chưa có Playlist Nổi Bật nào được khởi tạo.
+            </div>
+          )}
         </div>
       )}
 
@@ -366,19 +421,6 @@ export default function Home() {
                         className="absolute bottom-full left-0 mb-2 w-56 bg-[#282828] border border-zinc-700 rounded-xl p-3 shadow-2xl z-50 animate-fade-in text-white cursor-default"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                       >
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(`${window.location.origin}/api/Media/${song.id}/stream`);
-                            setIsCopying(true);
-                            setTimeout(() => setIsCopying(false), 2000);
-                          }}
-                          className="w-full text-left p-2 hover:bg-zinc-700 rounded-lg text-[11px] font-bold transition text-zinc-200 hover:text-white"
-                        >
-                          {isCopying ? '✅ Đã sao chép liên kết!' : '🔗 Sao chép liên kết'}
-                        </button>
-                        
-                        <div className="h-px bg-zinc-700 my-2"></div>
                         <div className="text-[10px] font-bold text-zinc-400 mb-1.5 px-1 uppercase tracking-wider">Gửi trực tiếp cho:</div>
                         
                         <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar">

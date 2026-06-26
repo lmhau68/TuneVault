@@ -124,6 +124,10 @@ export const mediaService = {
     const response = await apiClient.get<PlaylistModel[]>('/playlists/my');
     return response.data || [];
   },
+  getPublicPlaylists: async (): Promise<PlaylistModel[]> => {
+    const response = await apiClient.get<PlaylistModel[]>('/playlists/search?keyword=');
+    return response.data || [];
+  },
   createPlaylist: async (data: { name: string, description?: string, isPublic?: boolean }): Promise<PlaylistModel> => {
     const response = await apiClient.post('/playlists', { ...data, isPublic: data.isPublic ?? true });
     const respData = response.data || {};
@@ -213,7 +217,6 @@ export const mediaService = {
     const items = response.data?.data || [];
     if (!Array.isArray(items)) return [];
 
-    // BỔ SUNG: Kéo full thông tin bài hát từ API để hiển thị đầy đủ trên Sidebar
     const historyPromises = items.map(async (item: any) => {
       if (item.type === 'playlist' || item.playlistId) return item;
 
@@ -293,7 +296,6 @@ export const mediaService = {
           thumbnailPath: m.thumbnailPath || '',
           durationInSeconds: m.durationInSeconds || 0,
           fileSizeInBytes: m.fileSizeInBytes || 0,
-          // BỔ SUNG: Thêm các trường này để thư viện hiển thị đầy đủ
           artist: m.artist,
           album: m.album,
           genre: m.genre

@@ -4,6 +4,25 @@ import { mediaService } from '../services/api';
 import { PlayerContext } from '../App';
 import CreatePlaylistModal from './CreatePlaylistModal';
 
+// Hàm hỗ trợ format thời gian thân thiện (Vừa xong, x phút trước...)
+const formatPlayedTime = (dateString?: string) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Vừa xong';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} phút trước`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} giờ trước`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} ngày trước`;
+    
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
 function FollowUserButton({ userId, onClick, isActive }: { userId: number, onClick: () => void, isActive?: boolean }) {
   const [user, setUser] = React.useState<any>(null);
   React.useEffect(() => {
@@ -266,7 +285,7 @@ export default function Sidebar() {
               </>
             )}
 
-            {(followedArtists && followedArtists.length > 0) && (
+            {((libraryFilter === 'All' || libraryFilter === 'Follow') && followedArtists && followedArtists.length > 0) && (
               <div className="px-1 mb-2 mt-4">
                 <div className="flex flex-col gap-2 mb-3">
                   <div className="flex items-center justify-between">
@@ -295,7 +314,7 @@ export default function Sidebar() {
               </div>
             )}
 
-            {(followers && followers.length > 0) && (
+            {((libraryFilter === 'All' || libraryFilter === 'Follow') && followers && followers.length > 0) && (
               <div className="px-1 mb-4 mt-2 border-t border-zinc-800/60 pt-4">
                 <div className="flex flex-col gap-2 mb-3">
                   <div className="flex items-center justify-between">
@@ -422,9 +441,14 @@ export default function Sidebar() {
                           <p className={`text-sm font-bold truncate ${isSelected ? 'text-emerald-500' : 'text-white group-hover:text-emerald-400'} transition`}>
                             {p.name}
                           </p>
-                          <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                            Danh sách phát • Gần đây
-                          </p>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <p className="text-[11px] text-zinc-500 truncate">
+                              Danh sách phát • Gần đây
+                            </p>
+                            {item.playedAt && (
+                              <span className="text-[10px] text-zinc-600 shrink-0 ml-2">{formatPlayedTime(item.playedAt)}</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -462,9 +486,14 @@ export default function Sidebar() {
                         <p className={`text-sm font-bold truncate transition ${isActive ? 'text-emerald-400' : 'text-white group-hover:text-emerald-400'}`}>
                           {song.title}
                         </p>
-                        <p className="text-[11px] text-zinc-500 truncate mt-0.5">
-                          {song.artist || "Unknown Artist"} • {song.mediaType === 'Video' ? 'Video' : 'Audio'}
-                        </p>
+                        <div className="flex items-center justify-between mt-0.5">
+                          <p className="text-[11px] text-zinc-500 truncate">
+                            {song.artist || "Unknown Artist"} • {song.mediaType === 'Video' ? 'Video' : 'Audio'}
+                          </p>
+                          {song.playedAt && (
+                            <span className="text-[10px] text-zinc-600 shrink-0 ml-2">{formatPlayedTime(song.playedAt)}</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
