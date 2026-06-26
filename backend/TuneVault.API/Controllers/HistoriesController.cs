@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TuneVault.Application.DTOs;
+using TuneVault.Application.DTOs.History;
 using TuneVault.Application.Services;
 
 namespace TuneVault.API.Controllers;
