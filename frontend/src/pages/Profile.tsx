@@ -14,6 +14,7 @@ interface ExtendedUserProfile extends UserProfile {
   description?: string;
   Description?: string;
   DisplayName?: string;
+  AvatarUrl?: string;
 }
 
 export default function Profile() {
@@ -36,6 +37,10 @@ export default function Profile() {
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   const [displayNameInput, setDisplayNameInput] = useState('');
 
+  // Trạng thái chỉnh sửa Ảnh đại diện (AvatarUrl)
+  const [isEditingAvatar, setIsEditingAvatar] = useState(false);
+  const [avatarUrlInput, setAvatarUrlInput] = useState('');
+
   useEffect(() => {
     loadProfileData();
   }, []);
@@ -52,11 +57,13 @@ export default function Profile() {
         const fetchedBio = extData.bio || extData.Bio || extData.description || extData.Description || '';
         const fetchedEmail = extData.email || extData.Email || extData.emailAddress || '';
         const fetchedDisplayName = extData.displayName || extData.DisplayName || extData.username || extData.UserName || '';
+        const fetchedAvatar = extData.avatarUrl || extData.AvatarUrl || '';
 
         setFullNameInput(fetchedFullName);
         setBioInput(fetchedBio);
         setEmailInput(fetchedEmail);
         setDisplayNameInput(fetchedDisplayName);
+        setAvatarUrlInput(fetchedAvatar);
         
         setLoading(false);
       })
@@ -79,6 +86,7 @@ export default function Profile() {
         bio: bioInput,
         displayName: displayNameInput,
         email: emailInput,
+        avatarUrl: avatarUrlInput,
         ...updatedFields
       };
       await mediaService.updateProfile(payload);
@@ -110,8 +118,9 @@ export default function Profile() {
     if (success) setIsEditingDisplayName(false);
   };
 
-  const handleAvatarClick = () => {
-    alert("Tính năng thay đổi ảnh đại diện đang được liên kết với luồng API upload ảnh!");
+  const handleSaveAvatarUrl = async () => {
+    const success = await saveAllFields({ avatarUrl: avatarUrlInput });
+    if (success) setIsEditingAvatar(false);
   };
 
   if (loading) {
@@ -125,23 +134,42 @@ export default function Profile() {
         <p className="text-zinc-400 text-xs mt-1">Quản lý danh tính và thông tin tài khoản TuneVault của bạn.</p>
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex flex-col sm:flex-row items-center gap-6 mb-6 shadow-xl">
+      <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-6 shadow-xl">
         {/* Khu vực Avatar */}
-        <div className="relative w-24 h-24 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-3xl shadow-xl group overflow-visible shrink-0">
-          {profile?.avatarUrl ? (
-            <img src={profile.avatarUrl} alt="avatar" className="w-full h-full rounded-full object-cover"/>
-          ) : (
-            '👤'
+        <div className="flex flex-col items-center gap-3 shrink-0">
+          <div className="relative w-24 h-24 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-3xl shadow-xl group overflow-visible">
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="avatar" className="w-full h-full rounded-full object-cover"/>
+            ) : (
+              '👤'
+            )}
+            <button 
+              onClick={() => setIsEditingAvatar(!isEditingAvatar)}
+              className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-md transition-all active:scale-90 border-2 border-zinc-950 cursor-pointer group-hover:scale-105"
+              title="Thay đổi ảnh đại diện"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </button>
+          </div>
+          
+          {isEditingAvatar && (
+            <div className="flex flex-col gap-2 w-full max-w-[200px] animate-fade-in mt-1">
+              <input 
+                type="text"
+                value={avatarUrlInput}
+                onChange={(e) => setAvatarUrlInput(e.target.value)}
+                className="bg-zinc-800 text-xs text-white border border-zinc-700 rounded px-2 py-1.5 focus:outline-none focus:border-emerald-500 w-full"
+                placeholder="Dán link ảnh (URL)..."
+                autoFocus
+              />
+              <div className="flex justify-center gap-3">
+                <button onClick={handleSaveAvatarUrl} className="text-emerald-400 hover:text-emerald-300 text-[11px] font-bold cursor-pointer">Lưu link ảnh</button>
+                <button onClick={() => setIsEditingAvatar(false)} className="text-zinc-400 hover:text-zinc-300 text-[11px] cursor-pointer">Hủy</button>
+              </div>
+            </div>
           )}
-          <button 
-            onClick={handleAvatarClick}
-            className="absolute bottom-0 right-0 w-7 h-7 bg-emerald-500 hover:bg-emerald-400 text-black rounded-full flex items-center justify-center shadow-md transition-all active:scale-90 border-2 border-zinc-950 cursor-pointer group-hover:scale-105"
-            title="Thay đổi ảnh đại diện"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-              <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-          </button>
         </div>
 
         {/* Thông tin tên tuổi */}

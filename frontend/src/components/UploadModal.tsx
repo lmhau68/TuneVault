@@ -42,11 +42,16 @@ export default function UploadModal({ onClose, onUploaded }: any) {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!file) return alert('Vui lòng chọn hoặc kéo thả file Audio/Video để upload.');
+    
+    if (!title || !title.trim()) {
+        return alert('Vui lòng nhập tiêu đề (Title) bắt buộc!');
+    }
+
     setIsUploading(true);
     
     try {
       const fd = new FormData();
-      fd.append('Title', title || file.name.replace(/\.[^.]+$/, ''));
+      fd.append('Title', title.trim());
       if (artist) fd.append('Artist', artist);
       if (album) fd.append('Album', album);
       if (genre) fd.append('Genre', genre);
@@ -83,7 +88,7 @@ export default function UploadModal({ onClose, onUploaded }: any) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] font-bold text-zinc-400 block mb-1 uppercase tracking-wide">Tiêu đề <span className="text-red-500">*</span></label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Tên bài hát / video..." className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 transition placeholder:text-zinc-600" />
+              <input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Tên bài hát / video..." className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 transition placeholder:text-zinc-600" />
             </div>
             <div>
               <label className="text-[10px] font-bold text-zinc-400 block mb-1 uppercase tracking-wide">Nghệ sĩ thể hiện</label>
@@ -101,11 +106,12 @@ export default function UploadModal({ onClose, onUploaded }: any) {
                 className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-white focus:outline-none focus:border-emerald-500 transition appearance-none cursor-pointer"
               >
                 <option value="" disabled>-- Chọn thể loại --</option>
+                <option value="Trữ Tình">Trữ Tình</option>
+                <option value="Chill">Chill</option>
                 <option value="Pop">Pop</option>
-                <option value="Rap / Hip-hop">Rap / Hip-hop</option>
+                <option value="Rap">Rap</option>
                 <option value="R&B">R&B</option>
                 <option value="EDM / Dance">EDM / Dance</option>
-                <option value="Chill / Lofi">Chill / Lofi</option>
                 <option value="Acoustic / Indie">Acoustic / Indie</option>
                 <option value="Rock">Rock</option>
                 <option value="Jazz / Blues">Jazz / Blues</option>

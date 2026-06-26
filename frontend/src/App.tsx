@@ -46,7 +46,6 @@ function AppContent({
   
   const [ownerDisplayName, setOwnerDisplayName] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
-  const [isCopying, setIsCopying] = useState(false);
   
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
@@ -247,18 +246,6 @@ function AppContent({
                           
                           {showRightShareMenu && (
                             <div className="absolute top-full right-0 mt-2 w-56 bg-[#282828] border border-zinc-700 rounded-xl p-3 shadow-2xl z-50 animate-fade-in text-white cursor-default" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigator.clipboard.writeText(`${window.location.origin}/api/Media/${currentSong.id}/stream`);
-                                  setIsCopying(true);
-                                  setTimeout(() => setIsCopying(false), 2000);
-                                }}
-                                className="w-full text-left p-2 hover:bg-zinc-700 rounded-lg text-xs font-bold transition text-zinc-200 hover:text-white cursor-pointer"
-                              >
-                                {isCopying ? '✅ Đã sao chép liên kết!' : '🔗 Sao chép liên kết'}
-                              </button>
-                              <div className="h-px bg-zinc-700 my-2"></div>
                               <div className="text-[10px] font-bold text-zinc-400 mb-1.5 px-1 uppercase tracking-wider">Gửi trực tiếp cho:</div>
                               <div className="max-h-36 overflow-y-auto space-y-1 custom-scrollbar">
                                 {users.map((u) => {
