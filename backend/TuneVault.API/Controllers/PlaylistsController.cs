@@ -105,7 +105,7 @@ public class PlaylistsController : ControllerBase
     // GET /api/playlists/search?keyword=lofi
     [HttpGet("search")]
     [AllowAnonymous] 
-    public async Task<IActionResult> SearchPlaylists([FromQuery] string keyword)
+    public async Task<IActionResult> SearchPlaylists([FromQuery] string? keyword)
     {
         // Tự động "móc" ID của người dùng đang đăng nhập từ trong Token JWT ra
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -117,7 +117,7 @@ public class PlaylistsController : ControllerBase
             currentUserId = parsedId;
         }
         // Gọi Service xử lý
-        var result = await _playlistService.SearchPlaylistsAsync(keyword, currentUserId);
+        var result = await _playlistService.SearchPlaylistsAsync(keyword ?? "", currentUserId);
         
         return Ok(result);
     }

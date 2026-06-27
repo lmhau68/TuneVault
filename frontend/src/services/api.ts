@@ -118,7 +118,11 @@ export const mediaService = {
     const response = await apiClient.get(`/media/search?keyword=${encodeURIComponent(query)}`);
     return response.data || [];
   },
-
+  // Lấy cả public và private playlist nhờ Token tự động đính kèm
+  searchPlaylists: async (keyword: string): Promise<PlaylistModel[]> => {
+    const response = await apiClient.get<PlaylistModel[]>(`/playlists/search?keyword=${encodeURIComponent(keyword)}`);
+    return response.data || [];
+  },
   // --- PLAYLIST ---
   getPlaylists: async (): Promise<PlaylistModel[]> => {
     const response = await apiClient.get<PlaylistModel[]>('/playlists/my');

@@ -51,40 +51,38 @@ export default function Home() {
   useEffect(() => {
     // 1. LẤY PLAYLIST TỪ BACKEND (Xử lý đồng thời cả Public và Private để đảm bảo có dữ liệu hiển thị)
     Promise.all([
-      mediaService.getPublicPlaylists().catch(() => []),
-      mediaService.getPlaylists ? mediaService.getPlaylists().catch(() => []) : Promise.resolve([])
-    ]).then(([publicRes, privateRes]) => {
-      // Hàm bóc tách array an toàn cho backend .NET / SSMS
-      const extractArray = (res: any) => {
-        if (Array.isArray(res)) return res;
-        if (res?.data && Array.isArray(res.data)) return res.data;
-        if (res?.Data && Array.isArray(res.Data)) return res.Data;
-        if (res?.items && Array.isArray(res.items)) return res.items;
-        if (res?.Items && Array.isArray(res.Items)) return res.Items;
-        return [];
-      };
+      mediaService.getPublicPlaylists()])
+      .then((publicRes) => {
+        // 🚨 MÁY NGHE LÉN SỐ 1: Bắt xem API trả về cái gì
+        console.log("👉 Dữ liệu thô từ Backend trả về:", publicRes); 
 
-      const pubList = extractArray(publicRes);
-      const privList = extractArray(privateRes);
-      
-      // Gộp lại và loại bỏ trùng lặp theo ID
-      const combined = [...pubList, ...privList];
-      const uniquePlaylists = Array.from(new Map(combined.map(p => [p.id || p.Id, p])).values());
+        const extractArray = (res: any) => {
+          if (Array.isArray(res)) return res;
+          if (res?.data && Array.isArray(res.data)) return res.data;
+          if (res?.Data && Array.isArray(res.Data)) return res.Data;
+          if (res?.items && Array.isArray(res.items)) return res.items;
+          return [];
+        };
 
-      // Chuẩn hóa Mapping đảm bảo khớp 100% với PlaylistModel (xử lý case PascalCase của C#)
-      const mappedPlaylists = uniquePlaylists.map((item: any) => ({
-        ...item,
-        id: item.id ?? item.Id ?? item.PlaylistId,
-        userId: item.userId ?? item.UserId,
-        name: item.name ?? item.Name ?? "Playlist Không Tên",
-        description: item.description ?? item.Description ?? "Danh sách chọn lọc.",
-        isPublic: item.isPublic ?? item.IsPublic ?? true,
-        createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
-        tracksCount: item.tracksCount ?? item.TracksCount ?? 0
-      }));
+        const pubList = extractArray(publicRes).flat(Infinity);
+        const uniquePlaylists = Array.from(new Map(pubList.map((p: any) => [p.id || p.Id, p])).values());
+        const mappedPlaylists = uniquePlaylists.map((item: any) => ({
+          ...item,
+          id: item.id ?? item.Id ?? item.PlaylistId,
+          userId: item.userId ?? item.UserId,
+          name: item.name ?? item.Name ?? "Playlist Không Tên",
+          description: item.description ?? item.Description ?? "Danh sách chọn lọc.",
+          isPublic: item.isPublic ?? item.IsPublic ?? true,
+          createdAt: item.createdAt ?? item.CreatedAt ?? new Date().toISOString(),
+          tracksCount: item.tracksCount ?? item.TracksCount ?? 0
+        })).filter(playlist => playlist.isPublic === true);
 
-      setPlaylists(mappedPlaylists);
-    }).catch(e => console.error("Lỗi đồng bộ Playlist Nổi Bật:", e));
+        // 🚨 MÁY NGHE LÉN SỐ 2: Xem sau khi lọc còn lại gì
+        console.log("👉 Dữ liệu sau khi Map & Lọc:", mappedPlaylists); 
+
+        setPlaylists(mappedPlaylists);
+      })
+      .catch(e => console.error("Lỗi đồng bộ Playlist Nổi Bật:", e));
 
     // 2. LẤY DANH SÁCH BÀI HÁT / VIDEO
     mediaService.getSongs().then((res: any) => {

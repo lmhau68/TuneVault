@@ -109,30 +109,27 @@ export default function Header() {
     const delayDebounceFn = setTimeout(() => {
       setIsSearching(true);
       
-      Promise.all([
-        mediaService.searchMedia(searchVal).catch(() => []),
-        mediaService.getPlaylists ? mediaService.getPlaylists().catch(() => []) : Promise.resolve([]),
-        mediaService.getAllUsers().catch(() => [])
-      ])
-      .then(([tracksData, allPlaylists, allUsers]) => {
-        const filteredPlaylists = (allPlaylists || []).filter((p: any) => 
-          p.name?.toLowerCase().includes(searchVal.toLowerCase()) || 
-          p.description?.toLowerCase().includes(searchVal.toLowerCase())
-        );
+    Promise.all([
+            mediaService.searchMedia(searchVal).catch(() => []),
+            // Đổi từ getPlaylists() thành hàm search gọi đúng API Smart Search
+            mediaService.searchPlaylists ? mediaService.searchPlaylists(searchVal).catch(() => []) : Promise.resolve([]),
+            mediaService.getAllUsers().catch(() => [])
+          ])
+          .then(([tracksData, searchPlaylistsResult, allUsers]) => {
+            // Không cần dùng .filter() ở đây nữa, vì Backend đã làm quá tốt việc tìm kiếm rồi!
+            const filteredArtists = (allUsers || []).filter((u: any) => {
+              const name = u.displayName || u.email || '';
+              return name.toLowerCase().includes(searchVal.toLowerCase());
+            });
 
-        const filteredArtists = (allUsers || []).filter((u: any) => {
-          const name = u.displayName || u.email || '';
-          return name.toLowerCase().includes(searchVal.toLowerCase());
-        });
-
-        setSearchResults({
-          tracks: tracksData || [],
-          playlists: filteredPlaylists.slice(0, 5),
-          artists: filteredArtists.slice(0, 5)
-        });
-      })
-      .catch((error) => console.error("Lỗi tìm kiếm:", error))
-      .finally(() => setIsSearching(false));
+            setSearchResults({
+              tracks: tracksData || [],
+              playlists: searchPlaylistsResult.slice(0, 5), // Lấy thẳng data xịn từ Backend
+              artists: filteredArtists.slice(0, 5)
+            });
+          })
+          .catch((error) => console.error("Lỗi tìm kiếm:", error))
+          .finally(() => setIsSearching(false));
     }, 350);
 
     return () => clearTimeout(delayDebounceFn);
