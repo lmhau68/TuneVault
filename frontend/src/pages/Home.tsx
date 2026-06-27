@@ -231,7 +231,7 @@ export default function Home() {
           ) : aiRecommendations.length > 0 ? (
             <div className="flex gap-4 sm:gap-6 overflow-x-auto custom-scrollbar pb-4 snap-x">
               {aiRecommendations.map(song => {
-                const aiShareId = `ai-${song.id}`; // FIX: Tạo ID duy nhất cho khung AI
+                const aiShareId = `ai-${song.id}`; 
                 return (
                 <div 
                   key={`ai-${song.id}`}
@@ -240,7 +240,7 @@ export default function Home() {
                   <div onClick={() => handleSelectMedia && handleSelectMedia(song)} className="relative w-full aspect-square bg-zinc-800 rounded-lg mb-3 overflow-hidden shadow-inner">
                     {song.thumbnailPath ? (
                       <img 
-                        src={song.thumbnailPath.startsWith('http') ? song.thumbnailPath : `/api/media/thumbnail/${song.id}`} 
+                        src={song.thumbnailPath} 
                         alt={song.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=400'; }}
@@ -290,7 +290,6 @@ export default function Home() {
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   try {
-                                    // Chỗ này API truyền vẫn dùng ID thật của bài hát
                                     await mediaService.shareMedia(song.id, uid);
                                     alert(`Đã gửi "${song.title}" cho ${uName}!`);
                                   } catch (error: any) {
@@ -326,7 +325,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* KHUNG PLAYLIST NỔI BẬT (Đã kết nối Backend và Data Mapping chuẩn) */}
+      {/* KHUNG PLAYLIST NỔI BẬT */}
       {activeFilter === 'All' && (
         <div className="space-y-3 mt-6">
           <div className="flex items-center justify-between">
@@ -387,7 +386,7 @@ export default function Home() {
                   <div onClick={() => handleSelectMedia && handleSelectMedia(song)} className="relative w-full aspect-square bg-zinc-800 rounded-lg mb-3 overflow-hidden shadow-inner">
                     {song.thumbnailPath ? (
                       <img 
-                        src={song.thumbnailPath.startsWith('http') ? song.thumbnailPath : `/api/media/thumbnail/${song.id}`} 
+                        src={song.thumbnailPath} 
                         alt={song.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
                         onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=400'; }}
