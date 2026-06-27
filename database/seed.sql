@@ -9,8 +9,9 @@ INSERT INTO Users (Email, PasswordHash, DisplayName)
 VALUES
 ('minh@example.com', 'hashed_password_1', 'Minh'),
 ('an@example.com', 'hashed_password_2', 'An'),
-('bao@example.com', 'hashed_password_3', 'Bao');
-
+('bao@example.com', 'hashed_password_3', 'Bao'),
+('hau@gmail.com', '$2a$11$azQ3kkkX36.qpfqrEBBWz.gBhAEUvlUWkjFwA.LdPgQeifhviHm96', 'haulai'),
+('lai@gmail', '$2a$11$ENix3Q8VA42qrtSV904.MuDIGCigP5z26zaGOeiaNU5abGblZo9A2', 'laihau');
 -- UserProfiles mẫu
 INSERT INTO UserProfiles (UserId, FullName, Bio, AvatarUrl)
 VALUES
