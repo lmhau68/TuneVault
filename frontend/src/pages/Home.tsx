@@ -15,7 +15,8 @@ export default function Home() {
   
   const [activeFilter, setActiveFilter] = useState<'All' | 'Audio' | 'Video'>('All');
   
-  const [activeShareId, setActiveShareId] = useState<number | null>(null);
+  // FIX: Sửa lại state để nhận cả string (để tách biệt ID của khung AI và khung Thể loại)
+  const [activeShareId, setActiveShareId] = useState<number | string | null>(null);
   const shareMenuRef = useRef<HTMLDivElement | null>(null);
 
   const { 
@@ -229,7 +230,9 @@ export default function Home() {
              </div>
           ) : aiRecommendations.length > 0 ? (
             <div className="flex gap-4 sm:gap-6 overflow-x-auto custom-scrollbar pb-4 snap-x">
-              {aiRecommendations.map(song => (
+              {aiRecommendations.map(song => {
+                const aiShareId = `ai-${song.id}`; // FIX: Tạo ID duy nhất cho khung AI
+                return (
                 <div 
                   key={`ai-${song.id}`}
                   className="bg-[#181818] p-3 rounded-xl hover:bg-[#282828] transition-all duration-300 group cursor-pointer border border-emerald-900/30 shadow-[0_0_15px_rgba(16,185,129,0.05)] hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] flex flex-col relative shrink-0 w-32 sm:w-36 md:w-40 snap-start"
@@ -256,12 +259,12 @@ export default function Home() {
                   </div>
                   
                   {/* Share button cho AI Card */}
-                  <div className="relative w-full mt-auto" ref={activeShareId === `ai-${song.id}` as any ? shareMenuRef : null}>
+                  <div className="relative w-full mt-auto" ref={activeShareId === aiShareId ? shareMenuRef : null}>
                     <button 
                       onClick={(e) => { 
                         e.preventDefault();
                         e.stopPropagation(); 
-                        setActiveShareId(activeShareId === (song.id as any) ? null : song.id); 
+                        setActiveShareId(activeShareId === aiShareId ? null : aiShareId); 
                       }}
                       className="w-full py-1.5 bg-zinc-800/70 hover:bg-emerald-500 text-zinc-300 hover:text-black font-bold text-[11px] rounded-lg border border-zinc-700/50 hover:border-emerald-500 transition-all active:scale-95 flex items-center justify-center gap-1.5 shadow-md"
                     >
@@ -269,7 +272,7 @@ export default function Home() {
                       Chia sẻ
                     </button>
 
-                    {activeShareId === song.id && (
+                    {activeShareId === aiShareId && (
                       <div 
                         className="absolute bottom-full left-0 mb-2 w-56 bg-[#282828] border border-zinc-700 rounded-xl p-3 shadow-2xl z-50 animate-fade-in text-white cursor-default"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -287,6 +290,7 @@ export default function Home() {
                                 onClick={async (e) => {
                                   e.stopPropagation();
                                   try {
+                                    // Chỗ này API truyền vẫn dùng ID thật của bài hát
                                     await mediaService.shareMedia(song.id, uid);
                                     alert(`Đã gửi "${song.title}" cho ${uName}!`);
                                   } catch (error: any) {
@@ -312,7 +316,7 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           ) : (
             <div className="p-4 text-center bg-zinc-900/40 rounded-xl border border-zinc-800 text-zinc-500 text-xs italic">
