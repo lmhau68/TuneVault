@@ -26,10 +26,7 @@ public class MediaService
         {
             // 1. Phân tích đuôi file TRƯỚC để biết là Audio hay Video
             var extension = Path.GetExtension(request.File.FileName).ToLowerInvariant();
-            var allowedExtensions = new[]
-            {
-                ".mp3", ".wav", ".mp4", ".avi", ".mov"
-            };
+            var allowedExtensions = new[] { ".mp3", ".wav", ".mp4", ".avi", ".mov" };
 
             if (!allowedExtensions.Contains(extension))
             {
@@ -40,23 +37,45 @@ public class MediaService
                                 ? "Video" 
                                 : "Audio";
 
-            // 2. Tạo đường dẫn động theo loại Media ("audio" hoặc "video")
+            // 2. Tạo đường dẫn động theo loại Media
             string subFolder = mediaType.ToLower(); 
             var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", subFolder);
-            
-            // Tự động tạo folder nếu chưa có
             if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
 
             var fileName = $"{Guid.NewGuid()}_{request.File.FileName}";
             var filePath = Path.Combine(uploadPath, fileName);
 
-            // 3. Copy file vào đúng thư mục (audio/ hoặc video/)
+            // 3. Copy file media
             using (var stream = new FileStream(filePath, FileMode.Create))
             {
                 await request.File.CopyToAsync(stream);
             }
 
-            // 4. Lưu thông tin vào Database với FilePath đã được cập nhật chuẩn xác
+            // --- ĐOẠN BỔ SUNG: XỬ LÝ THUMBNAIL TẠI ĐÂY ---
+            string? thumbnailPath = null;
+            if (request.Thumbnail != null && request.Thumbnail.Length > 0)
+            {
+                var thumbExtension = Path.GetExtension(request.Thumbnail.FileName).ToLowerInvariant();
+                var allowedThumbExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                
+                if (allowedThumbExtensions.Contains(thumbExtension))
+                {
+                    var thumbFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "thumbnails");
+                    if (!Directory.Exists(thumbFolder)) Directory.CreateDirectory(thumbFolder);
+
+                    var thumbName = $"{Guid.NewGuid()}_{request.Thumbnail.FileName}";
+                    var thumbFullPath = Path.Combine(thumbFolder, thumbName);
+
+                    using (var stream = new FileStream(thumbFullPath, FileMode.Create))
+                    {
+                        await request.Thumbnail.CopyToAsync(stream);
+                    }
+                    thumbnailPath = $"/uploads/thumbnails/{thumbName}"; // Đường dẫn lưu vào DB
+                }
+            }
+            // ---------------------------------------------
+
+            // 4. Lưu thông tin vào Database
             var media = new MediaItem
             {
                 Title = request.Title,
@@ -64,8 +83,10 @@ public class MediaService
                 Artist = request.Artist,
                 Genre = request.Genre,
                 Album = request.Album,
+                Description = request.Description, // BỔ SUNG: Đã thêm lưu Description
                 MediaType = mediaType,
-                FilePath = $"/uploads/{subFolder}/{fileName}", // <-- Đường dẫn cực chuẩn để lưu DB
+                FilePath = $"/uploads/{subFolder}/{fileName}", 
+                ThumbnailPath = thumbnailPath,     // BỔ SUNG: Đã thêm lưu ThumbnailPath
                 FileSizeInBytes = request.File.Length
             };
 
