@@ -66,12 +66,10 @@ Hướng dẫn chạy Local
 9	Mở Terminal: Mở một cửa sổ terminal hoặc command prompt và điều hướng đến thư mục frontend/.
 10	Cài đặt Dependencies: Chạy lệnh sau để cài đặt các gói thư viện cần thiết:
 npm install
-# hoặc
-yarn install
+
 11	Chạy Frontend: Chạy lệnh sau để khởi động ứng dụng React:
 npm run dev
-# hoặc
-yarn dev
+
 12	Ứng dụng frontend sẽ chạy trên http://localhost:5173 (hoặc một cổng khác). Trình duyệt sẽ tự động mở và hiển thị giao diện người dùng.
 
 Tài khoản Seed (Tài khoản mẫu)
