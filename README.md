@@ -24,7 +24,7 @@ TuneVault là bài tập lớn môn C# and .NET Development.
 * SignalR
 
 ## Cấu trúc thư mục
-
+```text
 TuneVault/
 ├── backend/
 │   ├── TuneVault.API/
@@ -44,6 +44,7 @@ TuneVault/
 │   ├── src/
 │   └── ...
 └── README.md
+
 Hướng dẫn chạy Local
 Để chạy dự án TuneVault trên môi trường local, bạn cần thực hiện các bước sau:
 1. Cài đặt và cấu hình Database (SQL Server)Cài đặt SQL Server:
