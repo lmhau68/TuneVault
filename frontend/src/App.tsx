@@ -49,6 +49,9 @@ function AppContent({
   
   const shareMenuRef = useRef<HTMLDivElement>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
+  
+  // Ref cho Video PiP để đồng bộ Play/Pause với PlayerBar
+  const pipRef = useRef<HTMLVideoElement>(null);
 
   const { 
     librarySongs, toggleLibrarySong, 
@@ -70,6 +73,7 @@ function AppContent({
   }, [volume]);
 
   useEffect(() => {
+    // Đồng bộ PlayerBar (Audio tag)
     if (mediaRef.current) {
       if (isPlaying) {
         mediaRef.current.play().catch((err: any) => {
@@ -80,14 +84,27 @@ function AppContent({
         mediaRef.current.pause();
       }
     }
-  }, [isPlaying, currentSong, setIsPlaying]);
+    // Đồng bộ Video PiP
+    if (pipRef.current) {
+      if (isPlaying) {
+        pipRef.current.play().catch((err: any) => {
+          console.error("Lỗi tự động phát PiP:", err);
+        });
+      } else {
+        pipRef.current.pause();
+      }
+    }
+  }, [isPlaying, currentSong, pipVideo, setIsPlaying]);
 
   const handleSeek = (time: number) => {
     if (mediaRef.current) {
       mediaRef.current.currentTime = time;
-      setCurrentTime(time);
-      setSeekTime(time);
     }
+    if (pipRef.current) {
+      pipRef.current.currentTime = time;
+    }
+    setCurrentTime(time);
+    setSeekTime(time);
   };
 
   useEffect(() => {
@@ -412,7 +429,8 @@ function AppContent({
             </div>
           </div>
           <div className="flex-1 bg-black relative pointer-events-none">
-            <video src={`/api/Media/${pipVideo.id}/stream`} autoPlay muted controls={false} className="w-full h-full object-cover outline-none" />
+            {/* THÊM THUỘC TÍNH loop={isLooping} Ở ĐÂY ĐỂ ĐỒNG BỘ VIDEO VÀ AUDIO KHI LẶP LẠI */}
+            <video ref={pipRef} src={`/api/Media/${pipVideo.id}/stream`} autoPlay muted loop={isLooping} controls={false} className="w-full h-full object-cover outline-none" />
           </div>
         </div>
       )}

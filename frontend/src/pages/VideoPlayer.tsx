@@ -15,8 +15,8 @@ export default function VideoPlayer() {
   const {
     setIsPlaying, setPipVideo, isPlaying,
     volume, isLooping, seekTime, setSeekTime,
-    setCurrentTime, setDuration,
-    handleSelectMedia, currentSong // Kéo thêm context
+    setCurrentTime, currentTime, setDuration,
+    handleSelectMedia, currentSong 
   } = useContext(PlayerContext) || {};
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function VideoPlayer() {
         .catch(() => setVideo(null))
         .finally(() => setIsLoading(false));
     }
-  }, [id]); // Giữ nguyên dependency để tránh re-render liên tục
+  }, [id]);
 
   const handleExit = () => {
     if (videoRef.current) {
@@ -48,10 +48,17 @@ export default function VideoPlayer() {
 
   const handleTriggerPiP = () => {
     if (setPipVideo && video) {
-      setPipVideo(video);
-      navigate(-1);
+      setPipVideo(video); // Đưa video vào Context để App.tsx mount thẻ PiP
+      navigate(-1);       // Trở về trang trước đó
     }
   };
+
+  // Đồng bộ thời gian: Khi VideoPlayer load (ví dụ từ PiP bung to ra), lấy currentTime từ PlayerContext truyền vào
+  useEffect(() => {
+    if (videoRef.current && video) {
+      videoRef.current.currentTime = currentTime || 0;
+    }
+  }, [video]); // Chỉ set 1 lần khi video load xong
 
   useEffect(() => {
     if (videoRef.current && video) {

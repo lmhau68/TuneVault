@@ -2,19 +2,20 @@ import React, { useState } from 'react';
 
 interface CreatePlaylistModalProps {
   onClose: () => void;
-  onSubmit: (name: string, description: string) => void;
+  onSubmit: (name: string, description: string, isPublic: boolean) => void;
 }
 
 export default function CreatePlaylistModal({ onClose, onSubmit }: CreatePlaylistModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isPublic === null) return;
     setIsSubmitting(true);
-    onSubmit(name, description);
+    onSubmit(name, description, isPublic);
   };
 
   return (
@@ -41,6 +42,35 @@ export default function CreatePlaylistModal({ onClose, onSubmit }: CreatePlaylis
 
           <div>
             <label className="block text-xs font-bold text-zinc-400 mb-1.5">
+              Quyền riêng tư <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4 mt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="privacy" 
+                  checked={isPublic === true} 
+                  onChange={() => setIsPublic(true)} 
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer" 
+                  required
+                />
+                <span className="text-sm text-white">Công khai (Public)</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="privacy" 
+                  checked={isPublic === false} 
+                  onChange={() => setIsPublic(false)} 
+                  className="w-4 h-4 accent-emerald-500 cursor-pointer" 
+                />
+                <span className="text-sm text-white">Riêng tư (Private)</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-zinc-400 mb-1.5 mt-2">
               Mô tả ngắn gọn
             </label>
             <textarea
@@ -57,14 +87,14 @@ export default function CreatePlaylistModal({ onClose, onSubmit }: CreatePlaylis
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="text-sm font-bold text-zinc-400 hover:text-white px-4 py-2 transition"
+              className="text-sm font-bold text-zinc-400 hover:text-white px-4 py-2 transition cursor-pointer"
             >
               Hủy bỏ
             </button>
             <button
               type="submit"
-              disabled={!name.trim() || isSubmitting}
-              className="bg-white hover:bg-zinc-200 text-black text-sm font-bold px-6 py-2.5 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!name.trim() || isPublic === null || isSubmitting}
+              className="bg-white hover:bg-zinc-200 text-black text-sm font-bold px-6 py-2.5 rounded-full transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? 'Đang khởi tạo...' : 'Tạo mới ngay'}
             </button>

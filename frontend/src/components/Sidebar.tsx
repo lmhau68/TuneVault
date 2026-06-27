@@ -90,9 +90,9 @@ export default function Sidebar() {
     return () => window.removeEventListener('tune_vault_history_updated', handleHistoryUpdate);
   }, []);
 
-  const handleCreatePlaylist = async (name: string, description: string) => {
+  const handleCreatePlaylist = async (name: string, description: string, isPublic: boolean) => {
     try {
-      const newPlaylist = await mediaService.createPlaylist({ name, description });
+      const newPlaylist = await mediaService.createPlaylist({ name, description, isPublic });
       if (toggleSavePlaylist) toggleSavePlaylist(newPlaylist);
       setShowCreateModal(false);
     } catch {

@@ -1,29 +1,140 @@
 import { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { HubConnectionBuilder, HubConnection } from '@microsoft/signalr';
 import { mediaService } from '../services/api';
 import { type MediaShareModel } from '../types/media';
 import { PlayerContext } from '../App';
 
+// Hàm hỗ trợ format thời gian thân thiện (Vừa xong, x phút trước...)
+const formatRelativeTime = (dateString?: string) => {
+  if (!dateString) return '';
+  try {
+    // FIX MÚI GIỜ: Kiểm tra nếu chuỗi thiếu 'Z' (UTC) hoặc offset múi giờ thì tự động thêm 'Z'
+    // Để ép trình duyệt hiểu đây là giờ chuẩn quốc tế, sau đó tự quy đổi ra giờ Local của người dùng (VD: Việt Nam +7)
+    let safeDateString = dateString;
+    if (!safeDateString.endsWith('Z') && !safeDateString.match(/[+-]\d{2}:?\d{2}$/)) {
+      safeDateString += 'Z';
+    }
+
+    const date = new Date(safeDateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    
+    // Đảm bảo không bị số âm nếu thời gian client chạy nhanh hơn server vài mili-giây
+    const safeDiff = diffInSeconds < 0 ? 0 : diffInSeconds;
+    
+    if (safeDiff < 60) return 'Vừa xong';
+    if (safeDiff < 3600) return `${Math.floor(safeDiff / 60)} phút trước`;
+    if (safeDiff < 86400) return `${Math.floor(safeDiff / 3600)} giờ trước`;
+    if (safeDiff < 2592000) return `${Math.floor(safeDiff / 86400)} ngày trước`;
+    
+    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch {
+    return '';
+  }
+};
+
 export default function ShareInbox() {
   const [sharedMedia, setSharedMedia] = useState<MediaShareModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    mediaService.getSharedMedia()
-      .then(data => {
-        setSharedMedia(Array.isArray(data) ? data : []);
-      })
-      .catch(err => {
-        console.error("Lỗi khi tải dữ liệu được chia sẻ", err);
-        setSharedMedia([]);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+  const [tick, setTick] = useState(0); // Dùng để ép re-render cập nhật thời gian "phút trước"
+  
+  // Lưu trữ tên và loại (Audio/Video/Playlist) của các Media/Playlist 
+  const [titles, setTitles] = useState<Record<number, { text: string, type: string }>>({});
 
   const { handleSelectMedia, setSelectedPlaylist } = useContext(PlayerContext) || {};
   const navigate = useNavigate();
+
+  // Hàm tải dữ liệu riêng biệt để tái sử dụng
+  const fetchSharedData = async () => {
+    try {
+      const data = await mediaService.getSharedMedia();
+      const shares = Array.isArray(data) ? data : [];
+      setSharedMedia(shares);
+      
+      const newTitles: Record<number, { text: string, type: string }> = {};
+      
+      await Promise.all(shares.map(async (share) => {
+        if (share.mediaId > 0 && !newTitles[share.shareId]) {
+          try {
+            const media = await mediaService.getMediaById(share.mediaId);
+            if (media && media.title) {
+              newTitles[share.shareId] = { 
+                text: media.title, 
+                type: media.mediaType === 'Video' ? 'Video' : 'Audio' 
+              };
+            }
+          } catch (error) {
+            console.error("Lỗi tải tên media", error);
+          }
+        } else if (share.playlistId > 0 && !newTitles[share.shareId]) {
+          try {
+            const resp = await (await window.fetch(`/api/playlists/${share.playlistId}`)).json();
+            if (resp && resp.name) {
+              newTitles[share.shareId] = { text: resp.name, type: 'Danh sách phát' };
+            }
+          } catch (error) {
+            console.error("Lỗi tải tên playlist", error);
+          }
+        }
+      }));
+      
+      setTitles(prev => ({ ...prev, ...newTitles }));
+    } catch (err) {
+      console.error("Lỗi khi tải dữ liệu được chia sẻ", err);
+      setSharedMedia([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // 1. Tải dữ liệu ban đầu
+    fetchSharedData();
+
+    // 2. Thiết lập interval để tự động ép re-render component, giúp cập nhật "14 phút trước"
+    const timer = setInterval(() => {
+      setTick(t => t + 1);
+    }, 10000); // Tự cập nhật thời gian mỗi 10 giây
+
+    // 3. Kết nối SignalR để lắng nghe chia sẻ mới Real-time
+    let connection: HubConnection | null = null;
+    const token = localStorage.getItem('tune_vault_token');
+    
+    if (token) {
+      try {
+        connection = new HubConnectionBuilder()
+          .withUrl("/hubs/notifications", {
+            accessTokenFactory: () => token
+          })
+          .withAutomaticReconnect()
+          .build();
+
+        connection.start()
+          .then(() => {
+            connection?.on("ReceiveNotification", (notif: any) => {
+              // Nếu thông báo là chia sẻ nhạc thì load lại danh sách ngay!
+              if (notif.notificationType === 'SHARE_MEDIA') {
+                fetchSharedData(); 
+              }
+            });
+          })
+          .catch(err => console.error("SignalR Connection Error in ShareInbox:", err));
+      } catch (err) {
+        console.error("SignalR Init Error:", err);
+      }
+    }
+
+    // Cleanup khi component bị hủy
+    return () => {
+      clearInterval(timer);
+      if (connection) {
+        connection.off("ReceiveNotification");
+        connection.stop();
+      }
+    };
+  }, []);
 
   const handlePlayShare = async (share: MediaShareModel) => {
     try {
@@ -33,7 +144,6 @@ export default function ShareInbox() {
           handleSelectMedia(media);
         }
       } else if (share.playlistId && share.playlistId > 0) {
-        // open playlist view
         if (setSelectedPlaylist) {
           const resp = await (await (window.fetch(`/api/playlists/${share.playlistId}`))).json();
           const pl = resp || null;
@@ -76,9 +186,12 @@ export default function ShareInbox() {
                      </p>
                    )}
                    <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium">
-                     <span>{new Date(share.sharedAt).toLocaleString('vi-VN')}</span>
+                     {/* Sử dụng formatRelativeTime, nó sẽ tự update nhờ setTick */}
+                     <span>{formatRelativeTime(share.sharedAt)}</span>
                      <span>•</span>
-                     <span>Mã tệp: #{share.mediaId > 0 ? share.mediaId : share.playlistId}</span>
+                     <span className="text-emerald-300 font-bold truncate pr-4">
+                        {titles[share.shareId] ? `${titles[share.shareId].type}: ${titles[share.shareId].text}` : 'Đang tải tên...'}
+                     </span>
                    </div>
                  </div>
                  <button 
