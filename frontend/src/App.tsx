@@ -26,7 +26,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   };
   return (token && isTokenValid(token)) ? children : <Navigate to="/login" replace />;
 };
-
+const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+const getImgUrl = (path?: string) => path ? (path.startsWith('http') ? path : `${backendUrl}/${path.replace(/\\/g, '/')}`) : '';
 function AppContent({
   currentSong, isPlaying, setIsPlaying, rightPanelMode, setRightPanelMode,
   currentTime, setCurrentTime, duration, setDuration, volume, setVolume,
@@ -244,7 +245,11 @@ function AppContent({
               <div className="p-4 flex flex-col pb-10">
                 {currentSong ? (
                   <>
-                    <img src={currentSong.thumbnailPath || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500"} alt="Bìa" className="w-full aspect-square object-cover rounded-lg shadow-lg mb-3" />
+                  <img 
+                    src={getImgUrl(currentSong.thumbnailPath) || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=500"} 
+                    alt="Bìa" 
+                    className="w-full aspect-square object-cover..." 
+                  />
                     
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0 flex-1">

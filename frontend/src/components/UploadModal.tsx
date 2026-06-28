@@ -221,7 +221,7 @@ export default function UploadModal({ onClose, onUploaded }: any) {
                   <option value="Chill">Chill</option>
                   <option value="Pop">Pop</option>
                   <option value="Rap">Rap</option>
-                  <option value="R&B">R&B</option>
+                  <option value="R&B">Lofi</option>
                   <option value="EDM / Dance">EDM / Dance</option>
                   <option value="Acoustic / Indie">Acoustic / Indie</option>
                   <option value="Rock">Rock</option>

@@ -83,7 +83,7 @@ public class GetRecommendationsHandler
         {
             // 4. Tra cứu ngược lại CSDL để lấy ra MediaItem thực sự (thỏa mãn yêu cầu đề bài)
             var dbItems = await _mediaRepository.GetItemsByTitlesAsync(suggestedTitles);
-
+            
             // 5. Map dữ liệu từ Entity sang DTO để Frontend hiển thị và phát được nhạc
             finalRecommendations = dbItems.Select(item => new RecommendedMediaDto
             {
@@ -116,6 +116,8 @@ public class GetRecommendationsHandler
                 FilePath = item.FilePath
             }).ToList();
         }
+        else
+            Console.WriteLine("[AI LOG] AI đã trả về dữ liệu thành công.");
         return new RecommendationDto
         {
             Recommendations = finalRecommendations

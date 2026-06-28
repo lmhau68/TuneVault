@@ -15,7 +15,8 @@ interface SearchGroupResults {
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
-  
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+  const getImgUrl = (path?: string) => path ? (path.startsWith('http') ? path : `${backendUrl}/${path.replace(/\\/g, '/')}`) : '';
   const [searchParams, setSearchParams] = useSearchParams();
   const queryFromUrl = searchParams.get('q') || '';
   
@@ -238,7 +239,7 @@ export default function Header() {
                               className="w-full text-left p-2 hover:bg-white/10 rounded-lg transition flex items-center gap-3 cursor-pointer group"
                             >
                               {song.thumbnailPath ? (
-                                <img src={song.thumbnailPath} alt="" className="w-10 h-10 rounded object-cover shrink-0" />
+                                <img src={getImgUrl(song.thumbnailPath)} alt="" className="w-10 h-10 rounded object-cover shrink-0" />
                               ) : (
                                 <div className="w-10 h-10 rounded bg-[#333] flex items-center justify-center shrink-0">🎵</div>
                               )}

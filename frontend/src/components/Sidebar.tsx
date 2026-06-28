@@ -22,9 +22,11 @@ const formatPlayedTime = (dateString?: string) => {
     return '';
   }
 };
-
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+  const getImgUrl = (path?: string) => path ? (path.startsWith('http') ? path : `${backendUrl}/${path.replace(/\\/g, '/')}`) : '';
 function FollowUserButton({ userId, onClick, isActive }: { userId: number, onClick: () => void, isActive?: boolean }) {
   const [user, setUser] = React.useState<any>(null);
+
   React.useEffect(() => {
     let mounted = true;
     (async () => {
@@ -42,7 +44,7 @@ function FollowUserButton({ userId, onClick, isActive }: { userId: number, onCli
   return (
     <button onClick={onClick} className={`w-28 p-2 rounded-2xl bg-[#181818] border transition text-left cursor-pointer shrink-0 ${isActive ? 'border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.2)] bg-emerald-900/20' : 'border-zinc-800 hover:border-emerald-500/40'}`}>
       <div className="w-full h-20 rounded-2xl bg-zinc-900 overflow-hidden mb-2 relative">
-        {avatar ? <img src={avatar} alt={name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm text-zinc-400">{name.charAt(0).toUpperCase()}</div>}
+        {avatar ? <img src={getImgUrl(avatar)} alt={name} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm text-zinc-400">{name.charAt(0).toUpperCase()}</div>}
         {isActive && <div className="absolute inset-0 bg-emerald-500/10 pointer-events-none"></div>}
       </div>
       <div className={`text-[11px] font-bold leading-tight line-clamp-2 ${isActive ? 'text-emerald-400' : 'text-white'}`}>{name}</div>
@@ -365,7 +367,7 @@ export default function Sidebar() {
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           {song.thumbnailPath ? (
                             <img 
-                              src={song.thumbnailPath} 
+                              src={getImgUrl(song.thumbnailPath)} 
                               alt="" 
                               className={`w-11 h-11 rounded object-cover shrink-0 shadow-sm border ${isActive ? 'border-emerald-500' : 'border-zinc-800'}`} 
                             />
@@ -473,7 +475,7 @@ export default function Sidebar() {
                     >
                       {song.thumbnailPath ? (
                         <img 
-                          src={song.thumbnailPath} 
+                          src={getImgUrl(song.thumbnailPath)} 
                           alt={song.title} 
                           className="w-12 h-12 rounded object-cover shrink-0 shadow-sm" 
                         />

@@ -8,7 +8,8 @@ export default function Home() {
   const [playlists, setPlaylists] = useState<PlaylistModel[]>([]);
   const [songs, setSongs] = useState<Song[]>([]);
   const [users, setUsers] = useState<any[]>([]);
-  
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+  const getImgUrl = (path?: string) => path ? `${backendUrl}/${path.replace(/\\/g, '/')}` : '';
   // State cho AI Recommendations
   const [aiRecommendations, setAiRecommendations] = useState<Song[]>([]);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -239,12 +240,12 @@ export default function Home() {
                 >
                   <div onClick={() => handleSelectMedia && handleSelectMedia(song)} className="relative w-full aspect-square bg-zinc-800 rounded-lg mb-3 overflow-hidden shadow-inner">
                     {song.thumbnailPath ? (
-                      <img 
-                        src={song.thumbnailPath} 
-                        alt={song.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
-                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=400'; }}
-                      />
+                  <img 
+                      src={getImgUrl(song.thumbnailPath)} 
+                      alt={song.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=400'; }}
+                  />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl bg-zinc-800">🎵</div>
                     )}
@@ -385,12 +386,12 @@ export default function Home() {
                 >
                   <div onClick={() => handleSelectMedia && handleSelectMedia(song)} className="relative w-full aspect-square bg-zinc-800 rounded-lg mb-3 overflow-hidden shadow-inner">
                     {song.thumbnailPath ? (
-                      <img 
-                        src={song.thumbnailPath} 
-                        alt={song.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
-                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=400'; }}
-                      />
+                  <img 
+                      src={getImgUrl(song.thumbnailPath)} 
+                      alt={song.title} 
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
+                      onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1614680376593-902f74fa0d41?w=400'; }}
+                  />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl bg-zinc-800">🎵</div>
                     )}

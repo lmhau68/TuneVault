@@ -51,7 +51,7 @@ public class MediaService
                 await request.File.CopyToAsync(stream);
             }
 
-            // --- ĐOẠN BỔ SUNG: XỬ LÝ THUMBNAIL TẠI ĐÂY ---
+            // 4. XỬ LÝ THUMBNAIL TẠI ĐÂY
             string? thumbnailPath = null;
             if (request.Thumbnail != null && request.Thumbnail.Length > 0)
             {
@@ -73,9 +73,9 @@ public class MediaService
                     thumbnailPath = $"/uploads/thumbnails/{thumbName}"; // Đường dẫn lưu vào DB
                 }
             }
-            // ---------------------------------------------
 
-            // 4. Lưu thông tin vào Database
+
+            // 5. Lưu thông tin vào Database
             var media = new MediaItem
             {
                 Title = request.Title,
@@ -83,10 +83,10 @@ public class MediaService
                 Artist = request.Artist,
                 Genre = request.Genre,
                 Album = request.Album,
-                Description = request.Description, // BỔ SUNG: Đã thêm lưu Description
+                Description = request.Description, 
                 MediaType = mediaType,
                 FilePath = $"/uploads/{subFolder}/{fileName}", 
-                ThumbnailPath = thumbnailPath,     // BỔ SUNG: Đã thêm lưu ThumbnailPath
+                ThumbnailPath = thumbnailPath,     
                 FileSizeInBytes = request.File.Length
             };
 

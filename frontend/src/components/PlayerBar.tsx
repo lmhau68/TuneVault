@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useContext } from 'react';
 import { type Song } from '../types/media';
 import { PlayerContext } from '../App';
 
+const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+const getImgUrl = (path?: string) => path ? (path.startsWith('http') ? path : `${backendUrl}/${path.replace(/\\/g, '/')}`) : '';
+
 interface PlayerBarProps {
   currentSong: Song | null;
   isPlaying: boolean;
@@ -87,7 +90,7 @@ const PlayerBar: React.FC<PlayerBarProps> = ({
           <>
             <div className="w-11 h-11 bg-zinc-800 rounded-md overflow-hidden flex-shrink-0 shadow border border-zinc-800 relative hidden sm:block">
               {currentSong.thumbnailPath ? (
-                <img src={currentSong.thumbnailPath} alt="" className="w-full h-full object-cover" />
+                <img src={getImgUrl(currentSong.thumbnailPath)} alt="" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-lg">🎵</div>
               )}

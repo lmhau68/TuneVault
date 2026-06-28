@@ -4,7 +4,8 @@ import { PlayerContext } from '../App';
 export default function Library() {
   const [localQuery, setLocalQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'All' | 'Audio' | 'Video'>('All');
-
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+  const getImgUrl = (path?: string) => path ? (path.startsWith('http') ? path : `${backendUrl}/${path.replace(/\\/g, '/')}`) : '';
   const { librarySongs, toggleLibrarySong, handleSelectMedia } = useContext(PlayerContext) || {};
 
   const handleRemoveSong = (id: number) => {
@@ -67,7 +68,7 @@ export default function Library() {
             >
               <div className="flex items-center gap-4 min-w-0 flex-1">
                 {song.thumbnailPath ? (
-                  <img src={song.thumbnailPath} alt="" className="w-12 h-12 rounded object-cover shadow border border-zinc-800 shrink-0" />
+                  <img src={getImgUrl(song.thumbnailPath)} alt="" className="w-12 h-12 rounded object-cover shadow border border-zinc-800 shrink-0" />
                 ) : (
                   <div className="w-12 h-12 rounded bg-zinc-800 flex items-center justify-center text-lg shrink-0 shadow">
                     {song.mediaType === 'Video' ? '🎬' : '🎵'}
